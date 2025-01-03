@@ -1,0 +1,1 @@
+cmd /b /K "cd /D E:\DeepLearning\Code\DeepLearningSystem\license&&activate qgis_torch&&python LicenseTools.py"
