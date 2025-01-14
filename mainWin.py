@@ -22,7 +22,7 @@ class mainWindow(QMainWindow):
         # 主窗口
         QMainWindow.__init__(self)
         self.resize(1200, 800)
-        self.setWindowTitle("基于深度学习的遥感影像提取系统")       
+        self.setWindowTitle("基于深度学习的遥感影像提取系统")  
         self.showMaximized()#最大化窗口       
 
         # 画布
@@ -48,6 +48,9 @@ class mainWindow(QMainWindow):
         self.tocView.setMenuProvider(self.customMenuProvider)
 
         # 按钮
+        self.actionNewProject = QAction("新建工程", self)
+        self.actionOpenProject = QAction("打开工程", self)
+        self.actionSaveProject = QAction("保存工程", self)
         self.actionOpenRas = QAction("打开影像", self)
         self.actionOpenVec = QAction("打开矢量", self)
         self.actionZoomIn = QAction("放大工具", self)
@@ -68,7 +71,11 @@ class mainWindow(QMainWindow):
         self.actionPan.setCheckable(True)
         self.actionSelectFeature.setCheckable(True)
 
-        self.actionOpenRas.triggered.connect(self.openDialogRas)#绑定事件
+        # 绑定事件
+        self.actionNewProject.triggered.connect(self.newProject)
+        self.actionOpenProject.triggered.connect(self.openProject)
+        self.actionSaveProject.triggered.connect(self.saveProject)
+        self.actionOpenRas.triggered.connect(self.openDialogRas)
         self.actionOpenVec.triggered.connect(self.openDialogVec)
         self.actionZoomIn.triggered.connect(self.zoomIn)
         self.actionZoomOut.triggered.connect(self.zoomOut)
@@ -95,8 +102,12 @@ class mainWindow(QMainWindow):
         fileMenu = menuBar.addMenu('文件')# 添加“文件”菜单
         viewMenu = menuBar.addMenu('视图')
         processMenu = menuBar.addMenu('处理')   
-        helpMenu = menuBar.addMenu('帮助')                        
-        fileMenu.addAction(self.actionOpenRas)# 将“打开影像”菜单项添加到“文件”菜单中
+        helpMenu = menuBar.addMenu('帮助')   
+        fileMenu.addAction(self.actionNewProject)# 将“新建工程”菜单项添加到“文件”菜单中
+        fileMenu.addAction(self.actionOpenProject) 
+        fileMenu.addAction(self.actionSaveProject)  
+        fileMenu.addSeparator()                  
+        fileMenu.addAction(self.actionOpenRas)
         fileMenu.addAction(self.actionOpenVec)
         viewMenu.addAction(self.actionZoomIn)
         viewMenu.addAction(self.actionZoomOut)
@@ -115,6 +126,10 @@ class mainWindow(QMainWindow):
         # 工具栏
         toolBar = QToolBar("Canvas actions")
         self.addToolBar(toolBar)
+        toolBar.addAction(self.actionNewProject)
+        toolBar.addAction(self.actionOpenProject)
+        toolBar.addAction(self.actionSaveProject)
+        toolBar.addSeparator()
         toolBar.addAction(self.actionOpenRas)
         toolBar.addAction(self.actionOpenVec)
         toolBar.addSeparator()
@@ -291,7 +306,16 @@ class mainWindow(QMainWindow):
         icon_mainWindow.addPixmap(QPixmap("./settings/icon/mainWindow.png"), QIcon.Normal, QIcon.Off)
         self.setWindowIcon(icon_mainWindow)
 
-        icon_openImage = './settings/icon/DataLoader_Raster.png'# 替换为你的图标文件路径
+        icon_newProject = './settings/icon/SystemProject_NewProject.png'# 替换为你的图标文件路径
+        self.actionNewProject.setIcon(QIcon(icon_newProject))
+
+        icon_openProject = './settings/icon/SystemProject_OpenProject.png'
+        self.actionOpenProject.setIcon(QIcon(icon_openProject))
+
+        icon_saveProject = './settings/icon/SystemProject_SaveProject.png'
+        self.actionSaveProject.setIcon(QIcon(icon_saveProject))
+
+        icon_openImage = './settings/icon/DataLoader_Raster.png'
         self.actionOpenRas.setIcon(QIcon(icon_openImage))
 
         icon_openVector = './settings/icon/DataLoader_Vector.png'
@@ -317,7 +341,7 @@ class mainWindow(QMainWindow):
         
         icon_ClearDraw = './settings/icon/MainCategory_DeleteAllSelect.png'  
         self.actionClearDraw.setIcon(QIcon(icon_ClearDraw))       
-          
+
         icon_Segment = './settings/icon/Segment.png' 
         self.actionSegment.setIcon(QIcon(icon_Segment))
 
@@ -330,6 +354,49 @@ class mainWindow(QMainWindow):
         icon_About = './settings/icon/MainCategory_About.png'
         self.actionAbout.setIcon(QIcon(icon_About))
     
+    # 新建工程
+    def newProject(self):
+        # 创建一个新的项目
+        project = QgsProject.instance()
+        project.clear()  # 清除当前项目中的所有内容（如果有的话）
+        
+        # 设置项目的CRS（可选）
+        # 例如，使用WGS 84坐标系统
+        crs = QgsCoordinateReferenceSystem()
+        crs.createFromId(4326, QgsCoordinateReferenceSystem.EpsgCrsId)
+        project.setCrs(crs)
+        
+        # 保存新项目到文件（例如：new_project.qgs）
+        project.writeEntry("qgis", "/projectTitle", "New Project")  # 设置项目标题（可选）
+        project.setFileName("./temp/new_project.qgs")
+        project.write()
+
+        self.setWindowTitle("new_project.qgs - 基于深度学习的遥感影像提取系统") 
+
+    # 保存工程
+    def saveProject(self):
+        path_to_project = self.windowTitle().split(" - ")[0]
+        # 获取当前项目实例
+        project = QgsProject.instance() 
+        if path_to_project == "new_project.qgs":
+            path_to_project,_ = QFileDialog.getSaveFileName (self, '保存工程', '', 'Project File (*.qgs);;All Files (*.*)')
+            if  path_to_project == "":# 如果用户取消了选择，则返回空字符串
+                return               
+            # 设置要保存的文件路径和文件名
+            #project.setFileName(path_to_project)   
+            # 保存项目到指定文件
+            project.write(path_to_project)
+            self.setWindowTitle(f"{basename(path_to_project)} - 基于深度学习的遥感影像提取系统") 
+        else:
+            project.write()
+
+    # 打开工程
+    def openProject(self):
+        path_to_project,_ = QFileDialog.getOpenFileName (self, '打开工程', '', 'Project File (*.qgs);;All Files (*.*)')
+        if  path_to_project == "":# 如果用户取消了选择，则返回空字符串
+            return
+        self.addProject(path_to_project)  
+
     # 打开影像
     def openDialogRas(self):
         path_to_tif,_ = QFileDialog.getOpenFileName(self, '打开', '', 'Raster Files (*.tif;*.tiff;*.img;*.dat);;All Files (*.*)')
@@ -405,6 +472,19 @@ class mainWindow(QMainWindow):
         self.canvas.setDestinationCrs(layer.crs())
         self.canvas.refresh()
 
+    def addProject(self, path):
+        # 获取 QgsProject 的实例
+        project = QgsProject.instance()             
+        # 尝试加载工程文件
+        success = project.read(path)
+        # 检查加载是否成功
+        if not success:
+            print(f"Failed to load project: {path}")
+        else:
+            print("Project loaded successfully")
+        self.setWindowTitle(f"{basename(path)} - 基于深度学习的遥感影像提取系统") 
+        QgsLayerTreeMapCanvasBridge(project.layerTreeRoot(), self.canvas)        
+
     def showXY(self,point):
         x = point.x()
         y = point.y()
@@ -427,6 +507,8 @@ class mainWindow(QMainWindow):
                 self.addRaster(filePath)
             elif filePath.split(".")[-1] in ["shp","SHP","gpkg","geojson","kml"]:
                 self.addVector(filePath)
+            elif filePath.split(".")[-1] in ["qgs"]:
+                self.addProject(filePath)
             elif filePath == "":
                 pass
             else:
