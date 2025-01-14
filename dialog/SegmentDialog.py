@@ -9,6 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QMessageBox
 
 
 class Ui_Dialog(object):
@@ -209,12 +210,12 @@ class Ui_Dialog(object):
                                         #print(f"        child2 element: {child2.tagName}")#ModelType
                                         #print(f"            attr_value2: {attr_value2}")
                                         #print(f"  Text: {child2.firstChild.data.strip()}")
-                                        from os.path import basename
+                                        from os.path import basename,exists
                                         self.m_modelFile = child2.firstChild.data.strip()
                                         self.comboBox_modelList.addItem(basename(self.m_modelFile))
-                                    else:
-                                        # 使用wx.MessageBox显示消息框
-                                        from PyQt5.QtWidgets import QMessageBox
+                                        if not exists(self.m_modelFile):
+                                            QMessageBox.information(None, '提示', f"查询不到模型文件，请检查其是否存在！\n{self.m_modelFile}", QMessageBox.Ok)
+                                    else:                                     
                                         QMessageBox.information(self, '提示', "查询不到模型，请选择其它模型！", QMessageBox.Ok)                                                                     
 
     def on_openImage_clicked(self,Dialog):
