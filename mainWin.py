@@ -10,7 +10,7 @@
 
 from qgis.core import QgsProject, QgsLayerTreeModel, QgsRasterLayer, QgsVectorLayer, QgsCoordinateReferenceSystem, QgsMapLayerType, QgsMapSettings
 from qgis.gui import QgsMapCanvas, QgsLayerTreeView, QgsLayerTreeMapCanvasBridge, QgsMapToolPan,QgsMapToolZoom, QgsMapToolIdentifyFeature
-from qgis.PyQt.QtWidgets import QAction, QMainWindow, QToolBar, QLabel, QHBoxLayout, QWidget, QFileDialog, QMessageBox
+from qgis.PyQt.QtWidgets import QAction, QMainWindow, QToolBar, QLabel, QHBoxLayout, QWidget, QFileDialog, QMessageBox, QDialog
 from qgis.PyQt.QtGui import QIcon, QPixmap
 from qgis.PyQt.QtCore import Qt, QMimeData
 from os.path import basename
@@ -51,6 +51,13 @@ class mainWindow(QMainWindow):
         self.actionNewProject = QAction("新建工程", self)
         self.actionOpenProject = QAction("打开工程", self)
         self.actionSaveProject = QAction("保存工程", self)
+        self.actionEditSample = QAction("样本编辑", self)
+        self.actionMakeSample = QAction("样本制作", self)
+        self.actionEvalSample = QAction("样本评估", self)
+        self.actionManageSample = QAction("样本管理", self)
+        self.actionModelTrain = QAction("模型训练", self)
+        self.actionStopTrain = QAction("终止训练", self)
+        self.actionWatchTrain = QAction("监视训练", self)
         self.actionOpenRas = QAction("打开影像", self)
         self.actionOpenVec = QAction("打开矢量", self)
         self.actionZoomIn = QAction("放大工具", self)
@@ -70,6 +77,9 @@ class mainWindow(QMainWindow):
         self.actionZoomOut.setCheckable(True)
         self.actionPan.setCheckable(True)
         self.actionSelectFeature.setCheckable(True)
+        self.actionStopTrain.setEnabled(False)
+        self.actionWatchTrain.setEnabled(False)
+ 
 
         # 绑定事件
         self.actionNewProject.triggered.connect(self.newProject)
@@ -81,6 +91,9 @@ class mainWindow(QMainWindow):
         self.actionZoomOut.triggered.connect(self.zoomOut)
         self.actionPan.triggered.connect(self.pan)
         self.actionFullExtent.triggered.connect(self.fullExtent)
+        self.actionModelTrain.triggered.connect(self.modelTrain)
+        self.actionStopTrain.triggered.connect(self.stopTrain)
+        self.actionWatchTrain.triggered.connect(self.watchTrain)
         self.actionSelectFeature.triggered.connect(self.selectFeature)
         self.actionDrawRect.triggered.connect(self.drawRect)
         self.actionClearDraw.triggered.connect(self.clearDraw)  
@@ -101,6 +114,8 @@ class mainWindow(QMainWindow):
         menuBar = self.menuBar()# QMainWindow自带空的菜单栏、工具栏、状态栏
         fileMenu = menuBar.addMenu('文件')# 添加“文件”菜单
         viewMenu = menuBar.addMenu('视图')
+        sampleMenu = menuBar.addMenu('样本')
+        trainMenu = menuBar.addMenu('训练')
         processMenu = menuBar.addMenu('处理')   
         helpMenu = menuBar.addMenu('帮助')   
         fileMenu.addAction(self.actionNewProject)# 将“新建工程”菜单项添加到“文件”菜单中
@@ -113,6 +128,13 @@ class mainWindow(QMainWindow):
         viewMenu.addAction(self.actionZoomOut)
         viewMenu.addAction(self.actionPan)
         viewMenu.addAction(self.actionFullExtent)
+        sampleMenu.addAction(self.actionEditSample)
+        sampleMenu.addAction(self.actionMakeSample)
+        sampleMenu.addAction(self.actionEvalSample)
+        sampleMenu.addAction(self.actionManageSample)
+        trainMenu.addAction(self.actionModelTrain)
+        trainMenu.addAction(self.actionStopTrain)
+        trainMenu.addAction(self.actionWatchTrain)
         processMenu.addAction(self.actionSelectFeature)
         processMenu.addAction(self.actionDrawRect)
         processMenu.addAction(self.actionClearDraw)
@@ -137,7 +159,11 @@ class mainWindow(QMainWindow):
         toolBar.addAction(self.actionZoomOut)
         toolBar.addAction(self.actionPan)
         toolBar.addAction(self.actionFullExtent)
-        toolBar.addSeparator()    
+        toolBar.addSeparator() 
+        toolBar.addAction(self.actionModelTrain) 
+        toolBar.addAction(self.actionStopTrain)    
+        toolBar.addAction(self.actionWatchTrain)  
+        toolBar.addSeparator() 
         toolBar.addAction(self.actionSelectFeature)   
         toolBar.addAction(self.actionDrawRect)
         from tools.RectangleMapTool import RectangleMapTool
@@ -184,7 +210,7 @@ class mainWindow(QMainWindow):
         centralWidget.setLayout(hLayout)
         self.setCentralWidget(centralWidget)
 
-        self.pan()# 设置默认功能
+        self.pan()# 设置默认功能          
 
     def zoomIn(self):
         self.canvas.setMapTool(self.toolZoomIn)
@@ -198,6 +224,83 @@ class mainWindow(QMainWindow):
     def fullExtent(self):
         self.canvas.zoomToFullExtent()
 
+    def modelTrain(self):
+        from dialog.TrainDialog import Ui_Dialog
+        # 创建一个对话框实例，这里我们假设对话框是基于 QDialog 的
+        self.dialog = QDialog(self)
+        self.ui = Ui_Dialog()
+        self.ui.setupUi(self.dialog)
+        # 显示对话框
+        result = self.dialog.exec_()  # 这会阻塞，直到对话框关闭
+ 
+        if result == QDialog.Accepted:
+            self.actionStopTrain.setEnabled(True)
+            self.actionWatchTrain.setEnabled(True)
+            # sample
+            lines_train = []
+            train_nums = 0
+            lines_val = []
+            val_nums = 0
+            column_index = 4  # 假设复选框项在第三列（索引为4）
+            for row_index in range(self.ui.model.rowCount()):                  
+                check_state = self.ui.model.item(row_index, column_index).checkState()
+                if check_state == Qt.Checked:
+                    samplerange_file = self.ui.sampleList[row_index]+'SamplesRange.shp'
+                    from osgeo import ogr
+                    driver = ogr.GetDriverByName("ESRI Shapefile")
+                    data_source:ogr.DataSource = driver.Open(samplerange_file, 0)  # 0只读模式
+                    if data_source is None:
+                        print("无法打开文件")
+                    else:
+                        layer = data_source.GetLayer()
+                    for feature in layer:
+                        bz_vale = feature.GetField("Bz")
+                        name_value = feature.GetField("Name")
+                        path_value = feature.GetField("Path")
+                        sample = f'{path_value}/image/{name_value}.tif\n'
+                        if bz_vale == "train":
+                            lines_train.append(sample)
+                            train_nums+=1
+                        else:
+                            lines_val.append(sample)
+                            val_nums+=1
+                    data_source.Release()
+            with open('./temp/sample/train_set.txt', 'w', encoding='utf-8') as file:
+                file.write(f'{train_nums}\n')
+                file.writelines(lines_train)
+            with open('./temp/sample/val_set.txt', 'w', encoding='utf-8') as file:
+                file.write(f'{val_nums}\n')
+                file.writelines(lines_val)
+            # 初始化日志监视对话框
+            from dialog.LogDialog import Ui_Dialog as LogDialog     
+            self.log_dialog = QDialog(self)
+            self.ui_log = LogDialog()
+            self.ui_log.setupUi(self.log_dialog)    
+            # 启动训练子线程
+            from algorithm.TrainThread import TrainThread
+            self.thread_train = TrainThread(self.ui, self.progress_bar)
+            self.thread_train.finished.connect(self.on_train_finished)  # 连接信号到槽
+            self.thread_train.msg.connect(self.on_train_msg)  # 连接信号到槽
+            self.thread_train.start()                       
+        elif result == QDialog.Rejected:
+            print("User clicked Close or pressed Escape")
+
+    def on_train_finished(self, result):
+        QMessageBox.information(self, '提示', f"训练完成！", QMessageBox.Ok)
+
+    def on_train_msg(self, result):
+        self.ui_log.textEdit_Log.append(result)
+
+    def stopTrain(self):  
+        result = QMessageBox.question(self, '信息', "确定要终止训练？", QMessageBox.Yes | QMessageBox.No,
+                                        QMessageBox.No)
+        if result == QMessageBox.Yes:
+            self.thread_train.stop()
+
+    def watchTrain(self):                    
+        # 显示对话框
+        self.log_dialog.show()
+     
     def selectFeature(self):
         if self.actionSelectFeature.isChecked():
             if self.canvas.mapTool():
@@ -321,17 +424,26 @@ class mainWindow(QMainWindow):
         icon_openVector = './settings/icon/DataLoader_Vector.png'
         self.actionOpenVec.setIcon(QIcon(icon_openVector))
 
-        icon_zoonIn = './settings/icon/MapBrowser_ZoomIn.png'  
-        self.actionZoomIn.setIcon(QIcon(icon_zoonIn))
+        icon_zoomIn = './settings/icon/MapBrowser_ZoomIn.png'  
+        self.actionZoomIn.setIcon(QIcon(icon_zoomIn))
 
-        icon_zoonOut = './settings/icon/MapBrowser_ZoomOut.png'
-        self.actionZoomOut.setIcon(QIcon(icon_zoonOut))
+        icon_zoomOut = './settings/icon/MapBrowser_ZoomOut.png'
+        self.actionZoomOut.setIcon(QIcon(icon_zoomOut))
 
         icon_Pan = './settings/icon/MapBrowser_Pan.png'
         self.actionPan.setIcon(QIcon(icon_Pan))
 
         icon_FullExten = './settings/icon/MapBrowser_FullExtent.png'
         self.actionFullExtent.setIcon(QIcon(icon_FullExten))
+
+        icon_StartTrain = './settings/icon/Train_Start.png'
+        self.actionModelTrain.setIcon(QIcon(icon_StartTrain))
+
+        icon_StopTrain = './settings/icon/Train_Stop.png'
+        self.actionStopTrain.setIcon(QIcon(icon_StopTrain))
+
+        icon_WatchTrain = './settings/icon/Train_Watch.png'
+        self.actionWatchTrain.setIcon(QIcon(icon_WatchTrain))
         
         icon_SeclectFeature = './settings/icon/MarkTool_SelectElement.png'
         self.actionSelectFeature.setIcon(QIcon(icon_SeclectFeature))
