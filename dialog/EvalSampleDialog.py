@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'TrainDialog.ui'
+# Form implementation generated from reading ui file 'EvalSampleDialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -18,10 +18,10 @@ from xml.dom import minidom
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(514, 394)
+        Dialog.resize(412, 394)
         Dialog.setMinimumSize(QtCore.QSize(0, 0))
+        Dialog.setMaximumSize(QtCore.QSize(412, 394))
         Dialog.setWindowFlags(Dialog.windowFlags() & ~(QtCore.Qt.WindowContextHelpButtonHint)) # 隐藏对话框标题栏默认的问号按钮
-        Dialog.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.gridLayout_3 = QtWidgets.QGridLayout(Dialog)
         self.gridLayout_3.setObjectName("gridLayout_3")
         self.horizontalLayout_1 = QtWidgets.QHBoxLayout()
@@ -51,7 +51,8 @@ class Ui_Dialog(object):
         self.comboBox_sampleClass.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.comboBox_sampleClass.setEditable(True)
         self.comboBox_sampleClass.setObjectName("comboBox_sampleClass")
-        self.comboBox_sampleClass.addItems(["building", "road", "mine", "water", "forest", "pv", "greenhouse", "desert"])
+        self.comboBox_sampleClass.currentIndexChanged.connect(self.on_comboBox_sampleClass_currentIndexChanged)# 将 QComboBox 的 currentIndexChanged 信号连接到槽函数
+        self.comboBox_sampleClass.activated.connect(self.on_comboBox_sampleClass_activated)# 将 QComboBox 的 currentIndexChanged 信号连接到槽函数
         self.horizontalLayout.addWidget(self.comboBox_sampleClass)
         self.pushButton_QuerySample = QtWidgets.QPushButton(self.groupBox_SelectSample)
         self.pushButton_QuerySample.setMinimumSize(QtCore.QSize(71, 23))
@@ -93,62 +94,41 @@ class Ui_Dialog(object):
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.gridLayout = QtWidgets.QGridLayout()
         self.gridLayout.setObjectName("gridLayout")
-        self.label_3 = QtWidgets.QLabel(self.groupBox_setPara)
-        self.label_3.setObjectName("label_3")
-        self.gridLayout.addWidget(self.label_3, 1, 0, 1, 1)
-        self.lineEdit_learningRate = QtWidgets.QLineEdit(self.groupBox_setPara)
-        self.lineEdit_learningRate.setObjectName("lineEdit_learningRate")
-        self.gridLayout.addWidget(self.lineEdit_learningRate, 0, 3, 1, 1)
-        self.label_5 = QtWidgets.QLabel(self.groupBox_setPara)
-        self.label_5.setObjectName("label_5")
-        self.gridLayout.addWidget(self.label_5, 1, 2, 1, 1)
-        self.label_6 = QtWidgets.QLabel(self.groupBox_setPara)
-        self.label_6.setObjectName("label_6")
-        self.gridLayout.addWidget(self.label_6, 0, 2, 1, 1)
-        self.lineEdit_batch = QtWidgets.QLineEdit(self.groupBox_setPara)
-        self.lineEdit_batch.setObjectName("lineEdit_batch")
-        self.gridLayout.addWidget(self.lineEdit_batch, 1, 3, 1, 1)
-        self.lineEdit_epoch = QtWidgets.QLineEdit(self.groupBox_setPara)
-        self.lineEdit_epoch.setObjectName("lineEdit_epoch")
-        self.gridLayout.addWidget(self.lineEdit_epoch, 1, 1, 1, 1)
         self.comboBox_modelNet = QtWidgets.QComboBox(self.groupBox_setPara)
         self.comboBox_modelNet.setEditable(True)
         self.comboBox_modelNet.setObjectName("comboBox_modelNet")
-        self.comboBox_modelNet.addItems([ "AUNet", "UNet", "DeepLabV3Plus" ])
         self.gridLayout.addWidget(self.comboBox_modelNet, 0, 1, 1, 1)
+        self.label_3 = QtWidgets.QLabel(self.groupBox_setPara)
+        self.label_3.setObjectName("label_3")
+        self.gridLayout.addWidget(self.label_3, 1, 0, 1, 1)
         self.label_4 = QtWidgets.QLabel(self.groupBox_setPara)
+        self.label_4.setMaximumSize(QtCore.QSize(60, 23))
         self.label_4.setObjectName("label_4")
         self.gridLayout.addWidget(self.label_4, 0, 0, 1, 1)
+        self.pushButton_QueryModel = QtWidgets.QPushButton(self.groupBox_setPara)
+        self.pushButton_QueryModel.setMaximumSize(QtCore.QSize(71, 23))
+        self.pushButton_QueryModel.setObjectName("pushButton_QueryModel")
+        self.pushButton_QueryModel.clicked.connect(self.on_queryModel_clicked)#################################
+        self.gridLayout.addWidget(self.pushButton_QueryModel, 0, 2, 1, 1)
+        self.comboBox_modelList = QtWidgets.QComboBox(self.groupBox_setPara)
+        self.comboBox_modelList.setEnabled(True)
+        self.comboBox_modelList.setEditable(True)
+        self.comboBox_modelList.setObjectName("comboBox_modelList")
+        self.gridLayout.addWidget(self.comboBox_modelList, 1, 1, 1, 2)
         self.verticalLayout_3.addLayout(self.gridLayout)
         self.verticalLayoutMain.addWidget(self.groupBox_setPara)
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
-        self.horizontalLayout_saveImage = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_saveImage.setObjectName("horizontalLayout_saveImage")
-        self.label_2 = QtWidgets.QLabel(Dialog)
-        self.label_2.setObjectName("label_2")
-        self.horizontalLayout_saveImage.addWidget(self.label_2)
-        self.lineEdit_saveModelPath = QtWidgets.QLineEdit(Dialog)
-        self.lineEdit_saveModelPath.setMinimumSize(QtCore.QSize(0, 0))
-        self.lineEdit_saveModelPath.setMaximumSize(QtCore.QSize(16777215, 10000000))
-        self.lineEdit_saveModelPath.setObjectName("lineEdit_saveModelPath")
-        self.horizontalLayout_saveImage.addWidget(self.lineEdit_saveModelPath)
-        self.pushButton_saveModel = QtWidgets.QPushButton(Dialog)
-        self.pushButton_saveModel.setMinimumSize(QtCore.QSize(71, 23))
-        self.pushButton_saveModel.setMaximumSize(QtCore.QSize(71, 23))
-        self.pushButton_saveModel.setObjectName("pushButton_saveModel")
-        self.pushButton_saveModel.clicked.connect(self.on_saveModel_clicked)#####################
-        self.horizontalLayout_saveImage.addWidget(self.pushButton_saveModel)
-        self.verticalLayout.addLayout(self.horizontalLayout_saveImage)
-        self.pushButton_train = QtWidgets.QPushButton(Dialog)
-        self.pushButton_train.setObjectName("pushButton_train")
-        self.pushButton_train.clicked.connect(Dialog.accept) # type: ignore
-        self.verticalLayout.addWidget(self.pushButton_train, 0, QtCore.Qt.AlignHCenter)
+        self.pushButton_Yes = QtWidgets.QPushButton(Dialog)
+        self.pushButton_Yes.setMaximumSize(QtCore.QSize(71, 23))
+        self.pushButton_Yes.setObjectName("pushButton_Yes")
+        self.pushButton_Yes.clicked.connect(Dialog.accept) # type: ignore
+        self.verticalLayout.addWidget(self.pushButton_Yes, 0, QtCore.Qt.AlignHCenter)
         self.verticalLayoutMain.addLayout(self.verticalLayout)
         self.horizontalLayout_1.addLayout(self.verticalLayoutMain)
         self.gridLayout_3.addLayout(self.horizontalLayout_1, 0, 0, 1, 1)
 
-        self.retranslateUi(Dialog)       
+        self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
         self.comboBox_sampleClass.setCurrentIndex(-1)
@@ -156,6 +136,9 @@ class Ui_Dialog(object):
         # 创建模型并设置数据
         self.model = QStandardItemModel()
         self.model.setHorizontalHeaderLabels(["名称", "类别", "尺寸", "数量", "选择"])  # 设置列头标签
+        # 连接 itemChanged 信号到槽函数
+        self.model.itemChanged.connect(self.on_item_changed)
+        self.selectSampleList = []
         # 创建表格视图
         self.tableView_sampleList.setModel(self.model)
         self.tableView_sampleList.resizeColumnsToContents()        
@@ -163,27 +146,69 @@ class Ui_Dialog(object):
         self.tableView_sampleList.horizontalHeader().setSectionsClickable(True)
         self.tableView_sampleList.horizontalHeader().setSortIndicatorShown(True)
 
+        self.comboBox_sampleClass.clear()     
+        # XML文件的路径
+        xml_file_path = './settings/SamplesConfig.xml'
+        # 解析XML文件
+        dom = minidom.parse(xml_file_path)#Samples
+        # 获取根元素
+        root = dom.documentElement
+        # 遍历根元素的子元素
+        for child in root.childNodes:#SampleClass
+            # 检查节点类型，确保它是ELEMENT_NODE（即元素节点）
+            if child.nodeType == child.ELEMENT_NODE:
+                # 打印子元素的标签名、属性和文本内容
+                #print(f"Child element: {child.tagName}")#SampleClass
+                for attr, attr_value in child.attributes.items():  
+                    #print(f"attr: {attr}") 
+                    if(attr=='Name'):
+                        self.comboBox_sampleClass.addItem(attr_value)
+        self.comboBox_sampleClass.setCurrentIndex(-1)
+
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "模型训练"))
+        Dialog.setWindowTitle(_translate("Dialog", "评估样本"))
         self.groupBox_SelectSample.setTitle(_translate("Dialog", "样本库选择："))
         self.label.setText(_translate("Dialog", "样本库查询："))
         self.pushButton_QuerySample.setText(_translate("Dialog", "查询"))
-        self.label_7.setText(_translate("Dialog", "样本库列表："))
         self.checkBox.setToolTip(_translate("Dialog", "全选"))
-        self.groupBox_setPara.setTitle(_translate("Dialog", "参数设置："))
-        self.label_3.setText(_translate("Dialog", "迭代次数："))
-        self.lineEdit_learningRate.setText(_translate("Dialog", "1e-4"))
-        self.label_5.setText(_translate("Dialog", "批次样本量："))
-        self.label_6.setText(_translate("Dialog", "学习率："))
-        self.lineEdit_batch.setText(_translate("Dialog", "16"))
-        self.lineEdit_epoch.setText(_translate("Dialog", "100"))
-        self.comboBox_modelNet.setCurrentText(_translate("Dialog", "AUNet"))
+        self.label_7.setText(_translate("Dialog", "样本库列表："))
+        self.groupBox_setPara.setTitle(_translate("Dialog", "模型选择："))
+        self.label_3.setText(_translate("Dialog", "选择模型："))
         self.label_4.setText(_translate("Dialog", "模型网络："))
-        self.label_2.setText(_translate("Dialog", "保存路径："))
-        self.pushButton_saveModel.setText(_translate("Dialog", "浏览..."))
-        self.pushButton_train.setText(_translate("Dialog", "开始训练"))
+        self.pushButton_QueryModel.setText(_translate("Dialog", "查询"))
+        self.pushButton_Yes.setText(_translate("Dialog", "确定"))
 
+    def on_comboBox_sampleClass_currentIndexChanged(self,index):
+        #self.comboBox_sampleClass.clear()
+        pass
+
+    def on_comboBox_sampleClass_activated(self,index):         
+        self.comboBox_modelNet.clear()     
+        # XML文件的路径
+        xml_file_path = './settings/ModelsConfig.xml'
+        # 解析XML文件
+        dom = minidom.parse(xml_file_path)#Samples
+        # 获取根元素
+        root = dom.documentElement
+        # 遍历根元素的子元素
+        for child in root.childNodes:#SampleClass
+            # 检查节点类型，确保它是ELEMENT_NODE（即元素节点）
+            if child.nodeType == child.ELEMENT_NODE:
+                # 打印子元素的标签名、属性和文本内容
+                #print(f"Child element: {child.tagName}")#SampleClass
+                for attr, attr_value in child.attributes.items():  
+                    #print(f"attr: {attr}") 
+                    if(attr_value==self.comboBox_sampleClass.currentText()):
+                        for child2 in child.childNodes:
+                            # 检查节点类型，确保它是ELEMENT_NODE（即元素节点）
+                            if child2.nodeType == child2.ELEMENT_NODE:
+                                # 打印子元素的标签名、属性和文本内容
+                                #print(f"Child element: {child.tagName}")#SampleClass
+                                for attr, attr_value in child2.attributes.items():
+                                    self.comboBox_modelNet.addItem(attr_value)
+        self.comboBox_modelNet.setCurrentIndex(-1)
+    
     def on_querySample_clicked(self):
         sampleClass = self.comboBox_sampleClass.currentText()
         self.sampleList = []
@@ -228,6 +253,15 @@ class Ui_Dialog(object):
                                 self.model.appendRow(row)
         self.tableView_sampleList.resizeColumnsToContents()
 
+    # 捕获复选框状态变化的槽函数
+    def on_item_changed(self, item: QStandardItem):       
+        if item.isCheckable():  # 检查是否为复选框
+            row = item.row()
+            if item.checkState() == Qt.Checked:
+                self.selectSampleList.append(self.sampleList[row])
+            else:
+                self.selectSampleList.remove(self.sampleList[row])
+
     def onHeaderCheckBoxStateChanged(self, state):
         # 根据表头复选框的状态遍历模型中的所有行，并设置相应列的复选框项
         column_index = 4  # 假设复选框项在第三列（索引为4）
@@ -258,8 +292,43 @@ class Ui_Dialog(object):
 
         QMessageBox.information(None, '提示', f"共选择{number_of_selected_rows}样本分库！", QMessageBox.Ok)
 
-    def on_saveModel_clicked(self,Dialog):
-        from PyQt5.QtWidgets import QFileDialog
-        folder_selected = QFileDialog.getExistingDirectory(None, "Select Folder to Save")
-        if  folder_selected:
-            self.lineEdit_saveModelPath.setText(folder_selected)
+    def on_queryModel_clicked(self):
+        #清空
+        self.comboBox_modelList.clear()
+        self.comboBox_modelList.currentIndex = -1
+        from xml.dom import minidom
+
+        # XML文件的路径
+        xml_file_path = './settings/ModelsConfig.xml'
+
+        # 解析XML文件
+        dom = minidom.parse(xml_file_path)#Models
+
+        # 获取根元素
+        root = dom.documentElement
+
+        # 打印根元素的标签名
+        #print(f"Root element: {root.tagName}")#Models
+        #print(self.comboBox_modelNet.currentText())
+        # 遍历根元素的子元素
+        for child in root.childNodes:#ModelClass
+            # 检查节点类型，确保它是ELEMENT_NODE（即元素节点）
+            if child.nodeType == child.ELEMENT_NODE:
+                # 打印子元素的标签名、属性和文本内容
+                #print(f"Child element: {child.tagName}")#ModelClass
+                for __, attr_value in child.attributes.items():  
+                    #print(f"attr_value: {attr_value}")                         
+                    if attr_value == self.comboBox_sampleClass.currentText():                                   
+                        for child2 in child.childNodes:#ModelType
+                            if child2.nodeType == child2.ELEMENT_NODE:
+                                #print(f"child2 element: {child2.tagName}")#ModelType
+                                for __, attr_value2 in child2.attributes.items():  
+                                    print(attr_value2)                         
+                                    if attr_value2 == self.comboBox_modelNet.currentText():
+                                        from os.path import basename,exists
+                                        self.m_modelFile = child2.firstChild.data.strip()
+                                        self.comboBox_modelList.addItem(basename(self.m_modelFile))
+                                        if not exists(self.m_modelFile):
+                                            QMessageBox.information(None, '提示', f"查询不到模型文件，请检查其是否存在！\n{self.m_modelFile}", QMessageBox.Ok)
+                                    else:                                     
+                                        QMessageBox.information(self, '提示', "查询不到模型，请选择其它模型！", QMessageBox.Ok)  

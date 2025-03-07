@@ -1,6 +1,7 @@
 from qgis.PyQt.QtWidgets import QMenu, QAction,QMessageBox
 from qgis.core import QgsLayerTreeNode, QgsLayerTree, QgsMapLayerType, QgsProject, QgsLayerTreeGroup,QgsMapLayer
 from qgis.gui import QgsLayerTreeViewMenuProvider, QgsLayerTreeView, QgsLayerTreeViewDefaultActions, QgsMapCanvas
+from dialog.attributeDialog import AttributeDialog
 
 class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
     def __init__(self, mainWindow, layerTreeView: QgsLayerTreeView, mapCanvas: QgsMapCanvas, *args, **kwargs):
@@ -51,7 +52,7 @@ class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
             if layer.type() == QgsMapLayerType.VectorLayer:
                 # 矢量图层
                 openAttributeDialog = QAction('打开属性表', menu)
-                openAttributeDialog.triggered.connect(lambda: print(111))
+                openAttributeDialog.triggered.connect(lambda: self.openAttributeDialog(layer))
                 menu.addAction(openAttributeDialog)
             else:
                 # 栅格图层
@@ -69,6 +70,10 @@ class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
         else:
             print('node type is none')       
         return menu
+
+    def openAttributeDialog(self,layer):
+            self.mainWindow.ad = AttributeDialog(self.mainWindow, layer)
+            self.mainWindow.ad.show()
 
     def deleteSelectedLayer(self):
         deleteRes = QMessageBox.question(self.mainWindow, '信息', "确定要删除所选图层？", QMessageBox.Yes | QMessageBox.No,
