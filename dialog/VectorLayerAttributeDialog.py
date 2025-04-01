@@ -1,22 +1,21 @@
-# -*- coding: utf-8 -*-
-# @Author  : yoyi
-# @Time    : 2020/10/20 15:01
-from PyQt5 import QtCore, QtGui, QtWidgets
+
+from qgis.PyQt import QtCore, QtGui, QtWidgets
 from qgis.PyQt.QtWidgets import QDialog, QHBoxLayout,QDockWidget,QVBoxLayout,QDesktopWidget,QMessageBox
 from qgis.core import QgsVectorLayerCache,QgsVectorLayer
 from qgis.gui import QgsAttributeTableView, QgsAttributeTableModel, QgsAttributeTableFilterModel,QgsGui
 
-class AttributeDialog(QDialog):
-    def __init__(self, mainWindows,layer):
+class VectorLayerAttributeDialog(QDialog):
+    def __init__(self, mainWindows, layer):
         #mainWindows : MainWindow
-        super(AttributeDialog, self).__init__(mainWindows)
+        super(VectorLayerAttributeDialog, self).__init__(mainWindows)
         self.mainWindows = mainWindows
         self.mapCanvas = self.mainWindows.canvas
         self.layer : QgsVectorLayer = layer
         self.setObjectName("attrWidget"+self.layer.id())
         self.setWindowTitle("属性表:"+self.layer.name())
         vl = QHBoxLayout(self)
-        self.tableView = QgsAttributeTableView(self)
+        self.tableView = QgsAttributeTableView(self)   
+        self.tableView.doubleClicked.connect(self.on_double_click)# 连接双击信号到槽函数
         self.resize(800, 600)
         vl.addWidget(self.tableView)
         self.center()
@@ -44,3 +43,12 @@ class AttributeDialog(QDialog):
         self.tableView.setModel(self.tableFilterModel)
         #self.tableView.edit()
         #print(self.tableView.currentIndex())
+
+    def on_double_click(self,index):
+        # 获取当前选中的行
+        #row = index.row()
+        # 获取当前行的属性值
+        #layer = self.tableView.layer()
+        #feature = layer.getFeature(row)
+        if not self.layer.isEditable():
+            QMessageBox.information(self.tableView, "信息", "如要编辑属性，请打开图层编辑状态！", QMessageBox.Ok)
