@@ -1,6 +1,7 @@
-from PyQt5.QtCore import QThread, pyqtSignal
+from qgis.PyQt.QtCore import QThread, pyqtSignal
 from xml.dom import minidom
- 
+
+
 class QuerySampleThread(QThread):
     finished = pyqtSignal(object)  # 用于将数据从子线程发送到主线程的信号
 
@@ -21,8 +22,8 @@ class QuerySampleThread(QThread):
         sampleGSD = self.ui.comboBox_GSD.currentText()
         sampleName = self.ui.comboBox_Name.currentText()
         self.sampleList = []
-        xml_file_path = './settings/SamplesConfig.xml'
-        dom = minidom.parse(xml_file_path)#Samples
+        from DeeplearningSystem import sample_cofing_path
+        dom = minidom.parse(sample_cofing_path)#Samples
         root = dom.documentElement
         for child in root.childNodes:#SampleClass
             if child.nodeType == child.ELEMENT_NODE:

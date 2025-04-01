@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QThread, pyqtSignal
+from qgis.PyQt.QtCore import QThread, pyqtSignal
  
 class MakeSampleThread(QThread):
     finished = pyqtSignal(object)  # 用于将数据从子线程发送到主线程的信号

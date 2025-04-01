@@ -14,18 +14,28 @@ from qgis.PyQt.QtWidgets import QMessageBox
 import datetime,json
 from cryptography.fernet import Fernet
 from mainWin import mainWindow
-        
+from os.path import dirname,join
+from os import environ
+base_dir = dirname(__file__)      
+environ['PROJ_LIB'] = base_dir+'/settings'
+key_path = join(base_dir, 'license', 'secret.key')
+lic_path = join(base_dir, 'license', 'license.lic')
+zh_Hans = join(base_dir, 'settings', 'zh-Hans.qm')
+model_cofing_path = join(base_dir, 'settings', 'ModelsConfig.xml')
+sample_cofing_path = join(base_dir, 'settings', 'SamplesConfig.xml')
+train_set = join(base_dir, 'temp/sample', 'train_set.txt')
+val_set = join(base_dir, 'temp/sample', 'val_set.txt')
+
 
 if __name__ == "__main__":
 
-    # 授权
+    # 授权   
     # 从文件加载密钥
-    with open('./license/secret.key', 'rb') as key_file:
+    with open(key_path, 'rb') as key_file:
         key = key_file.read()           
     # 创建Fernet对象
-    fernet = Fernet(key)
-
-    with open('./license/license.lic', "rb") as f:
+    fernet = Fernet(key)    
+    with open(lic_path, "rb") as f:
         encrypted_license = f.read()         
     license_json = fernet.decrypt(encrypted_license).decode()
     license_data = json.loads(license_json)
@@ -33,12 +43,12 @@ if __name__ == "__main__":
     user_id = license_data.get("user_id")
     expiration_date = license_data.get("expiration_date")
 
-    QgsApplication.setPrefixPath(r'D:\AI_Test', True)
+    #QgsApplication.setPrefixPath(r'D:\AI_Test', True)
     QgsApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     app = QgsApplication([], False)
 
     t = QTranslator()
-    t.load(r'.\settings\zh-Hans.qm')
+    t.load(zh_Hans) 
     app.installTranslator(t)
 
     app.initQgis()

@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QThread, pyqtSignal
+from qgis.PyQt.QtCore import QThread, pyqtSignal
  
 class RasterToVectorThread(QThread):
     finished = pyqtSignal(object)  # 用于将数据从子线程发送到主线程的信号
@@ -36,6 +36,7 @@ class RasterToVectorThread(QThread):
         '''
         import time
         from osgeo import gdal,ogr,osr
+        gdal.UseExceptions()
         time_start=time.time()
         self.progress_bar.setText('开始处理...')
         inputfile = self.ui.comboBox_openImage.currentText()
@@ -57,7 +58,8 @@ class RasterToVectorThread(QThread):
         options=[]
         # 参数  输入栅格图像波段\掩码图像波段、矢量化后的矢量图层、需要将DN值写入矢量字段的索引、算法选项、进度条回调函数、进度条参数
         gdal.Polygonize(srcband, maskband, dst_layer,dst_field, options, progress_callback,self)
-        ds, dst_ds = None, None
+        ds.Close()
+        dst_ds = None
         time_end=time.time()
         self.progress_bar.setText(f'完成处理：花费时间 {((time_end-time_start)/60.0):.2f} 分钟')
         return dst_filename

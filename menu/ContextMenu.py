@@ -1,7 +1,7 @@
 from qgis.PyQt.QtWidgets import QMenu, QAction,QMessageBox
 from qgis.core import QgsLayerTreeNode, QgsLayerTree, QgsMapLayerType, QgsProject, QgsLayerTreeGroup,QgsMapLayer
 from qgis.gui import QgsLayerTreeViewMenuProvider, QgsLayerTreeView, QgsLayerTreeViewDefaultActions, QgsMapCanvas
-from dialog.attributeDialog import AttributeDialog
+from dialog.VectorLayerAttributeDialog import VectorLayerAttributeDialog
 
 class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
     def __init__(self, mainWindow, layerTreeView: QgsLayerTreeView, mapCanvas: QgsMapCanvas, *args, **kwargs):
@@ -28,7 +28,7 @@ class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
         node: QgsLayerTreeNode = self.layerTreeView.currentNode()
         if QgsLayerTree.isGroup(node):
             # 图组操作
-            print('group')
+            #print('group')
             group: QgsLayerTreeGroup = self.layerTreeView.currentGroupNode()
             self.actionRenameGroup = actions.actionRenameGroupOrLayer(menu)
             menu.addAction(self.actionRenameGroup)
@@ -36,7 +36,7 @@ class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
             actionDeleteGroup.triggered.connect(lambda: self.deleteGroup(group))
             menu.addAction(actionDeleteGroup)
         elif QgsLayerTree.isLayer(node):
-            print('layer')
+            #print('layer')
             #ZoomToLayer
             self.actionZoomToLayer = actions.actionZoomToLayer(self.mapCanvas, menu)
             menu.addAction(self.actionZoomToLayer)
@@ -59,7 +59,7 @@ class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
                 pass
             if len(self.layerTreeView.selectedLayers()) >= 1:
                 # 添加组
-                print('selectedLayers')
+                #print('selectedLayers')
                 self.actionGroupSelected = actions.actionGroupSelected()
                 menu.addAction(self.actionGroupSelected)
             
@@ -72,7 +72,7 @@ class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
         return menu
 
     def openAttributeDialog(self,layer):
-            self.mainWindow.ad = AttributeDialog(self.mainWindow, layer)
+            self.mainWindow.ad = VectorLayerAttributeDialog(self.mainWindow, layer)
             self.mainWindow.ad.show()
 
     def deleteSelectedLayer(self):
@@ -90,13 +90,14 @@ class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
     
     def deleteAllLayer(self):
         if len(QgsProject.instance().mapLayers().values()) == 0:
-            QMessageBox.about(None, '信息', '您的图层为空')
+            QMessageBox.about(self.mainWindow, '信息', '您的图层为空')
         else:
             deleteRes = QMessageBox.question(self.mainWindow, '信息', "确定要删除所有图层？", QMessageBox.Yes | QMessageBox.No,
                                                QMessageBox.No)
             if deleteRes == QMessageBox.Yes:
                 for layer in QgsProject.instance().mapLayers().values():
                         self.deleteLayer(layer)
+                self.mainWindow.firstAddLayer = True
     
     def deleteGroup(self,group:QgsLayerTreeGroup):
         deleteRes = QMessageBox.question(self.mainWindow, '信息', "确定要删除选中组？", QMessageBox.Yes | QMessageBox.No,
@@ -109,8 +110,8 @@ class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
 
     def openLayerPropTriggered(self,layer):
         try:
-            from dialog.layerPropWidget import LayerPropWindowWidgeter
-            self.lp = LayerPropWindowWidgeter(layer,self.mainWindow)
+            from dialog.LayerAttributeDialog import LayerAttributeDialog
+            self.lp = LayerAttributeDialog(layer,self.mainWindow)
             print(type(self.lp))
             self.lp.show()
         except:

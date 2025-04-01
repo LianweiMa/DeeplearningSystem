@@ -1,5 +1,5 @@
-from PyQt5.QtCore import QThread, pyqtSignal
- 
+from qgis.PyQt.QtCore import QThread, pyqtSignal
+
 class TrainThread(QThread):
     finished = pyqtSignal(object)  # 用于将数据从子线程发送到主线程的信号
     msg = pyqtSignal(object)
@@ -63,14 +63,13 @@ class TrainThread(QThread):
             optimizer = optim.Adam(net.parameters(), lr=learn_rate, weight_decay=0)
             criterion = nn.BCEWithLogitsLoss()         
             writer = SummaryWriter(log_dir=save_fold)
-            # train data         
-            train_file = './temp/sample/train_set.txt'
-            dataset = BasicDataset(train_file)
+            # train data   
+            from DeeplearningSystem import train_set,val_set  
+            dataset = BasicDataset(train_set)
             n_train = len(dataset)
             train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, pin_memory=True, drop_last=True)
-            # val data
-            val_file = './temp/sample/val_set.txt'
-            val_dataset = ValDataset(val_file)
+            # val data    
+            val_dataset = ValDataset(val_set)
             n_val = len(val_dataset)
             val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True, drop_last=True)
             # info 

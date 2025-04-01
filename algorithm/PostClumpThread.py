@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QThread, pyqtSignal
+from qgis.PyQt.QtCore import QThread, pyqtSignal
  
 class PostClumpThread(QThread):
 

@@ -4,7 +4,7 @@ from qgis.PyQt.QtGui import QCursor,QPixmap,QPen, QColor
 from qgis.PyQt.QtWidgets import QMessageBox,QUndoStack,QComboBox,QMenu,QAction
 from qgis.core import QgsRectangle,QgsPointXY, QgsWkbTypes,QgsVectorLayer, QgsVectorDataProvider,QgsFeature,QgsGeometry, QgsWkbTypes
 from qgis.gui import QgsMapToolEmitPoint, QgsRubberBand
-from dialog.mapTool_InputAttrWindow import inputAttrWindowClass
+from dialog.FeatureAttributeDialog import FeatureAttributeDialog
 
 
 class PolygonMapTool(QgsMapToolEmitPoint):
@@ -72,7 +72,7 @@ class PolygonMapTool(QgsMapToolEmitPoint):
         if self.caps & QgsVectorDataProvider.AddFeatures:
             feat = QgsFeature(self.editLayer.fields())
             #print("可编辑？",self.editLayer.isEditable())
-            inputAttrWindows = inputAttrWindowClass(self,feat,self.mainWindow)
+            inputAttrWindows = FeatureAttributeDialog(self,feat,self.mainWindow)
             inputAttrWindows.exec()
 
     def addFeatureByDict(self,resDict:dict):
