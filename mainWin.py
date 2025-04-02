@@ -10,7 +10,7 @@
 
 from qgis.core import QgsProject, QgsLayerTreeModel, QgsRasterLayer, QgsVectorLayer, QgsMapLayer, QgsCoordinateReferenceSystem, QgsMapLayerType, QgsMapSettings
 from qgis.gui import QgsMapCanvas, QgsLayerTreeView, QgsLayerTreeMapCanvasBridge, QgsMapToolPan, QgsMapToolZoom, QgsMapToolIdentifyFeature
-from qgis.PyQt.QtWidgets import QAction, QMainWindow, QToolBar, QLabel, QHBoxLayout, QWidget, QFileDialog, QMessageBox, QDialog
+from qgis.PyQt.QtWidgets import QAction, QMainWindow, QToolBar, QLabel, QHBoxLayout, QWidget, QFileDialog, QMessageBox, QDialog, QDockWidget
 from qgis.PyQt.QtGui import QIcon, QPixmap
 from qgis.PyQt.QtCore import Qt, QMimeData
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
@@ -43,8 +43,8 @@ class mainWindow(QMainWindow):
         self.model.setFlag(QgsLayerTreeModel.AllowNodeChangeVisibility)
         self.tocView = QgsLayerTreeView()
         self.tocView.setModel(self.model)
-        self.tocView.setFixedWidth(300)
-        self.bridge = QgsLayerTreeMapCanvasBridge(self.root, self.canvas,self)
+        #self.tocView.setFixedWidth(300)
+        self.bridge = QgsLayerTreeMapCanvasBridge(self.root, self.canvas, self)
         # 图层管理器中添加右键菜单
         from menu.ContextMenu import CustomMenuProvider
         self.customMenuProvider = CustomMenuProvider(self, self.tocView, self.canvas)
@@ -56,12 +56,12 @@ class mainWindow(QMainWindow):
         self.tableView_sampleList.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.tableView_sampleList.setObjectName("tableView_sampleList")
         self.tableView_sampleList.horizontalHeader().setCascadingSectionResizes(False)
-        self.tableView_sampleList.setFixedWidth(600)
+        #self.tableView_sampleList.setFixedWidth(600)
         # 创建模型并设置数据
-        self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["名称", "类别", "误差", "查准", "查全", "IOU", "路径", "编辑"])  # 设置列头标签
+        self.sampleModel = QStandardItemModel()
+        self.sampleModel.setHorizontalHeaderLabels(["名称", "类别", "误差", "查准", "查全", "IOU", "路径", "编辑"])  # 设置列头标签
         # 创建表格视图
-        self.tableView_sampleList.setModel(self.model)
+        self.tableView_sampleList.setModel(self.sampleModel)
         self.tableView_sampleList.resizeColumnsToContents()
         # 设置 QTableView 的列头可排序
         self.tableView_sampleList.horizontalHeader().setSectionsClickable(True)
@@ -94,6 +94,8 @@ class mainWindow(QMainWindow):
         self.actionZoomOut = QAction("缩小工具", self)
         self.actionPan = QAction("平移工具", self)
         self.actionFullExtent = QAction("全图工具", self)  
+        self.actionLayerView = QAction("图层面板", self) 
+        self.actionSamplesView = QAction("样本库面板", self) 
         self.actionSelectFeature = QAction("选择要素",self) 
         self.actionDrawRect = QAction("画矩形", self)    
         self.actionClearDraw = QAction("清绘", self)
@@ -105,7 +107,11 @@ class mainWindow(QMainWindow):
 
         self.actionZoomIn.setCheckable(True)#QAction对象设置为可选中状态
         self.actionZoomOut.setCheckable(True)
-        self.actionPan.setCheckable(True)
+        self.actionPan.setCheckable(True) 
+        self.actionLayerView.setCheckable(True)
+        self.actionLayerView.setChecked(True)   # 默认状态（勾选）
+        self.actionSamplesView.setCheckable(True)
+        self.actionSamplesView.setChecked(True)
         self.actionSelectFeature.setCheckable(True)
         self.actionStopTrain.setEnabled(False)
         self.actionWatchTrain.setEnabled(False)
@@ -113,6 +119,7 @@ class mainWindow(QMainWindow):
         self.actionEditSample.setEnabled(False)
         self.actionSelectSample.setCheckable(True)
         self.actionCloseSamples.setEnabled(False)
+        
 
         # 绑定事件
         self.actionNewProject.triggered.connect(self.newProject)
@@ -124,6 +131,8 @@ class mainWindow(QMainWindow):
         self.actionZoomOut.triggered.connect(self.zoomOut)
         self.actionPan.triggered.connect(self.pan)
         self.actionFullExtent.triggered.connect(self.fullExtent)
+        self.actionLayerView.toggled.connect(self.showLayerView)
+        self.actionSamplesView.toggled.connect(self.showSamplesView)
         self.actionEditSample.triggered.connect(self.editSample)
         self.actionDrawPolygon.triggered.connect(self.drawPolygon)
         self.actionSelectSample.triggered.connect(self.selectFeature)
@@ -171,6 +180,9 @@ class mainWindow(QMainWindow):
         viewMenu.addAction(self.actionZoomOut)
         viewMenu.addAction(self.actionPan)
         viewMenu.addAction(self.actionFullExtent)
+        viewMenu.addSeparator()   
+        viewMenu.addAction(self.actionLayerView)
+        viewMenu.addAction(self.actionSamplesView)
         sampleMenu.addAction(self.actionEditSample)
         sampleMenu.addAction(self.actionDrawPolygon)
         sampleMenu.addAction(self.actionSelectFeature)
@@ -266,14 +278,47 @@ class mainWindow(QMainWindow):
             }
         """)
 
+        self.tocView_dock = QDockWidget('图层',self)
+        # 关键属性设置
+        self.tocView_dock.setFeatures(
+            QDockWidget.DockWidgetClosable |
+            QDockWidget.DockWidgetMovable |  # 允许移动
+            QDockWidget.DockWidgetFloatable   # 允许浮动
+        )
+        self.tocView_dock.setAllowedAreas(Qt.AllDockWidgetAreas)  # 允许所有停靠区域
+        # 设置样式表（关键步骤）
+        self.tocView_dock.setStyleSheet("""
+            QDockWidget {
+                background: transparent;  /* 背景透明 */
+            }
+            QDockWidget::title {
+                background: transparent;  /* 标题栏透明 */
+                padding: 0px;
+            }
+        """)
+        self.tocView_dock.visibilityChanged.connect(self.on_tocViewDock_visibility_changed)
+        self.tocView_dock.setWidget(self.tocView)
+        self.tableView_dock = QDockWidget('样本库列表',self)
+        self.tableView_dock.setStyleSheet("""
+            QDockWidget {
+                background: transparent;  /* 背景透明 */
+            }
+            QDockWidget::title {
+                background: transparent;  /* 标题栏透明 */
+                padding: 0px;
+            }
+        """)
+        self.tableView_dock.visibilityChanged.connect(self.on_tableViewDock_visibility_changed)
+        self.tableView_dock.setWidget(self.tableView_sampleList)
         # 主窗口布局
-        centralWidget = QWidget()
-        hLayout = QHBoxLayout()
-        hLayout.addWidget(self.tocView)
-        hLayout.addWidget(self.canvas)
-        hLayout.addWidget(self.tableView_sampleList)
-        centralWidget.setLayout(hLayout)
-        self.setCentralWidget(centralWidget)
+        self.setCentralWidget(self.canvas)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.tocView_dock)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.tableView_dock)
+
+        # 设置初始宽度（单位：像素）
+        self.tocView_dock.setMinimumWidth(200)
+        self.tableView_dock.setMinimumWidth(300)
+        
 
         self.pan()# 设置默认功能          
 
@@ -288,6 +333,30 @@ class mainWindow(QMainWindow):
 
     def fullExtent(self):
         self.canvas.zoomToFullExtent()
+
+    def showLayerView(self,checked):
+        if checked:
+            self.tocView_dock.setVisible(True)  # 不显示
+        else:
+            self.tocView_dock.setVisible(False)  # 显示
+
+    def on_tocViewDock_visibility_changed(self,visible):  
+        if not visible: 
+            self.actionLayerView.setChecked(False)
+        else:
+            self.actionLayerView.setChecked(True)
+
+    def on_tableViewDock_visibility_changed(self,visible):
+        if not visible: 
+            self.actionSamplesView.setChecked(False)
+        else:
+            self.actionSamplesView.setChecked(True)
+
+    def showSamplesView(self,checked):
+        if checked:
+            self.tableView_dock.setVisible(True)  # 显示
+        else:
+            self.tableView_dock.setVisible(False)  # 显示  
 
     def layerClicked(self):
         curLayer: QgsMapLayer = self.tocView.currentLayer()
@@ -394,6 +463,7 @@ class mainWindow(QMainWindow):
         print(result)
         import time
         from osgeo import ogr
+        ogr.UseExceptions()
         time_start=time.time()
         self.progress_bar.setText('开始处理...')
         samplelists = self.thread_query.sampleList
@@ -426,7 +496,7 @@ class mainWindow(QMainWindow):
                 checkbox_item.setCheckable(True)
                 #checkbox_item.setCheckState(Qt.Unchecked)  # 可选：设置初始检查状态                               
                 row = [QStandardItem(name), QStandardItem(type), QStandardItem(loss), QStandardItem(acc), QStandardItem(recall), QStandardItem(iou), QStandardItem(path), checkbox_item]
-                self.model.appendRow(row)
+                self.sampleModel.appendRow(row)
         self.tableView_sampleList.resizeColumnsToContents()
         time_end = time.time()
         self.progress_bar.setText(f"处理完成: 花费时间 {((time_end-time_start)/60.0):.2f} 分钟")
@@ -524,7 +594,7 @@ class mainWindow(QMainWindow):
 
     # 关闭样本库
     def closeSamples(self):
-        self.model.removeRows(0,self.model.rowCount())
+        self.sampleModel.removeRows(0,self.model.rowCount())
         self.tableView_sampleList.resizeColumnsToContents()
         self.actionCloseSamples.setEnabled(False)
 
@@ -757,6 +827,10 @@ class mainWindow(QMainWindow):
         icon_FullExten = join(base_dir, 'settings/icon', 'MapBrowser_FullExtent.png')
         self.actionFullExtent.setIcon(QIcon(icon_FullExten))
 
+        #icon_ShowView = join(base_dir, 'settings/icon', 'check.png')
+        #self.actionLayerView.setIcon(QIcon(icon_ShowView))
+        #self.actionSamplesView.setIcon(QIcon(icon_ShowView))
+
         icon_EditSample = join(base_dir, 'settings/icon', 'VectorEditor_Edit.png')
         self.actionEditSample.setIcon(QIcon(icon_EditSample))
 
@@ -964,10 +1038,12 @@ class mainWindow(QMainWindow):
         QgsLayerTreeMapCanvasBridge(project.layerTreeRoot(), self.canvas)        
 
     def showXY(self,point):
-        x = point.x()
-        y = point.y()
-        self.coordinate_label.setText(f'{x:.6f}, {y:.6f}')
-        #self.coordinate_label.setText("Coordinate:"+str(point.x())+","+str(point.y()))
+        if bool(QgsProject.instance().mapLayers()):
+            x = point.x()
+            y = point.y()
+            self.coordinate_label.setText(f'坐标：{x:.6f}, {y:.6f}')
+        else:
+            self.coordinate_label.setText('坐标：无数据')
 
     def dragEnterEvent(self, fileData):
         if fileData.mimeData().hasUrls():
