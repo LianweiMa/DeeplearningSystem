@@ -46,6 +46,8 @@ class mainWindow(QMainWindow):
         self.tocView.setModel(self.model)
         #self.tocView.setFixedWidth(300)
         self.bridge = QgsLayerTreeMapCanvasBridge(self.root, self.canvas, self)
+        #self.tocView.setFixedWidth(300)
+        self.bridge = QgsLayerTreeMapCanvasBridge(self.root, self.canvas, self)
         # 图层管理器中添加右键菜单
         from menu.ContextMenu import CustomMenuProvider
         self.customMenuProvider = CustomMenuProvider(self, self.tocView, self.canvas)
@@ -58,10 +60,14 @@ class mainWindow(QMainWindow):
         self.tableView_sampleList.setObjectName("tableView_sampleList")
         self.tableView_sampleList.horizontalHeader().setCascadingSectionResizes(False)
         #self.tableView_sampleList.setFixedWidth(600)
+        #self.tableView_sampleList.setFixedWidth(600)
         # 创建模型并设置数据
         self.sampleModel = QStandardItemModel()
         self.sampleModel.setHorizontalHeaderLabels(["名称", "类别", "误差", "查准", "查全", "IOU", "路径", "编辑"])  # 设置列头标签
+        self.sampleModel = QStandardItemModel()
+        self.sampleModel.setHorizontalHeaderLabels(["名称", "类别", "误差", "查准", "查全", "IOU", "路径", "编辑"])  # 设置列头标签
         # 创建表格视图
+        self.tableView_sampleList.setModel(self.sampleModel)
         self.tableView_sampleList.setModel(self.sampleModel)
         self.tableView_sampleList.resizeColumnsToContents()
         # 设置 QTableView 的列头可排序
@@ -97,6 +103,8 @@ class mainWindow(QMainWindow):
         self.actionFullExtent = QAction("全图工具", self)  
         self.actionLayerView = QAction("图层面板", self) 
         self.actionSamplesView = QAction("样本库面板", self) 
+        self.actionLayerView = QAction("图层面板", self) 
+        self.actionSamplesView = QAction("样本库面板", self) 
         self.actionSelectFeature = QAction("选择要素",self) 
         self.actionDrawRect = QAction("画矩形", self)    
         self.actionClearDraw = QAction("清绘", self)
@@ -116,6 +124,11 @@ class mainWindow(QMainWindow):
         self.actionLayerView.setChecked(True)   # 默认状态（勾选）
         self.actionSamplesView.setCheckable(True)
         self.actionSamplesView.setChecked(True)
+        self.actionPan.setCheckable(True) 
+        self.actionLayerView.setCheckable(True)
+        self.actionLayerView.setChecked(True)   # 默认状态（勾选）
+        self.actionSamplesView.setCheckable(True)
+        self.actionSamplesView.setChecked(True)
         self.actionSelectFeature.setCheckable(True)
         self.actionStopTrain.setEnabled(False)
         self.actionWatchTrain.setEnabled(False)
@@ -123,6 +136,7 @@ class mainWindow(QMainWindow):
         self.actionEditSample.setEnabled(False)
         self.actionSelectSample.setCheckable(True)
         self.actionCloseSamples.setEnabled(False)
+        
         
 
         # 绑定事件
@@ -135,6 +149,8 @@ class mainWindow(QMainWindow):
         self.actionZoomOut.triggered.connect(self.zoomOut)
         self.actionPan.triggered.connect(self.pan)
         self.actionFullExtent.triggered.connect(self.fullExtent)
+        self.actionLayerView.toggled.connect(self.showLayerView)
+        self.actionSamplesView.toggled.connect(self.showSamplesView)
         self.actionLayerView.toggled.connect(self.showLayerView)
         self.actionSamplesView.toggled.connect(self.showSamplesView)
         self.actionEditSample.triggered.connect(self.editSample)
@@ -186,6 +202,9 @@ class mainWindow(QMainWindow):
         viewMenu.addAction(self.actionZoomOut)
         viewMenu.addAction(self.actionPan)
         viewMenu.addAction(self.actionFullExtent)
+        viewMenu.addSeparator()   
+        viewMenu.addAction(self.actionLayerView)
+        viewMenu.addAction(self.actionSamplesView)
         viewMenu.addSeparator()   
         viewMenu.addAction(self.actionLayerView)
         viewMenu.addAction(self.actionSamplesView)
@@ -319,7 +338,47 @@ class mainWindow(QMainWindow):
         """)
         self.tableView_dock.visibilityChanged.connect(self.on_tableViewDock_visibility_changed)
         self.tableView_dock.setWidget(self.tableView_sampleList)
+        self.tocView_dock = QDockWidget('图层',self)
+        # 关键属性设置
+        self.tocView_dock.setFeatures(
+            QDockWidget.DockWidgetClosable |
+            QDockWidget.DockWidgetMovable |  # 允许移动
+            QDockWidget.DockWidgetFloatable   # 允许浮动
+        )
+        self.tocView_dock.setAllowedAreas(Qt.AllDockWidgetAreas)  # 允许所有停靠区域
+        # 设置样式表（关键步骤）
+        self.tocView_dock.setStyleSheet("""
+            QDockWidget {
+                background: transparent;  /* 背景透明 */
+            }
+            QDockWidget::title {
+                background: transparent;  /* 标题栏透明 */
+                padding: 0px;
+            }
+        """)
+        self.tocView_dock.visibilityChanged.connect(self.on_tocViewDock_visibility_changed)
+        self.tocView_dock.setWidget(self.tocView)
+        self.tableView_dock = QDockWidget('样本库列表',self)
+        self.tableView_dock.setStyleSheet("""
+            QDockWidget {
+                background: transparent;  /* 背景透明 */
+            }
+            QDockWidget::title {
+                background: transparent;  /* 标题栏透明 */
+                padding: 0px;
+            }
+        """)
+        self.tableView_dock.visibilityChanged.connect(self.on_tableViewDock_visibility_changed)
+        self.tableView_dock.setWidget(self.tableView_sampleList)
         # 主窗口布局
+        self.setCentralWidget(self.canvas)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.tocView_dock)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.tableView_dock)
+
+        # 设置初始宽度（单位：像素）
+        self.tocView_dock.setMinimumWidth(200)
+        self.tableView_dock.setMinimumWidth(300)
+        
         self.setCentralWidget(self.canvas)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.tocView_dock)
         self.addDockWidget(Qt.RightDockWidgetArea, self.tableView_dock)
@@ -1130,6 +1189,10 @@ class mainWindow(QMainWindow):
 
         icon_FullExten = join(base_dir, 'settings/icon', 'MapBrowser_FullExtent.png')
         self.actionFullExtent.setIcon(QIcon(icon_FullExten))
+
+        #icon_ShowView = join(base_dir, 'settings/icon', 'check.png')
+        #self.actionLayerView.setIcon(QIcon(icon_ShowView))
+        #self.actionSamplesView.setIcon(QIcon(icon_ShowView))
 
         icon_EditSample = join(base_dir, 'settings/icon', 'VectorEditor_Edit.png')
         self.actionEditSample.setIcon(QIcon(icon_EditSample))
