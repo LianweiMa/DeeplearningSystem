@@ -10,7 +10,6 @@
 
 from qgis.core import QgsApplication
 from qgis.PyQt.QtCore import Qt,QTranslator
-from qgis.PyQt.QtWidgets import QMessageBox
 import datetime,json
 from cryptography.fernet import Fernet
 from mainWin import mainWindow
@@ -57,8 +56,8 @@ if __name__ == "__main__":
     
     # 在这里进行详细的验证，如检查版本、用户身份、期限和功能等
     if datetime.datetime.strptime(expiration_date, "%Y-%m-%d") < datetime.datetime.now():        
-        QMessageBox.question(myWindow, '警告', f"许可截至：{expiration_date}！\n已过期，请联系技术人员！", QMessageBox.Yes | QMessageBox.No,
-                                        QMessageBox.No)
+        from tools.CommonTool import show_info_message
+        show_info_message(myWindow, '警告', f"许可截至：{expiration_date}！\n已过期，请联系技术人员！")
         myWindow.close()      
     else:   
         print('run')

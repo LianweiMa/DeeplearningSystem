@@ -16,6 +16,7 @@ from qgis.PyQt.QtCore import Qt, QMimeData
 from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from qgis.PyQt import QtWidgets,QtCore
 from os.path import basename,join
+from tools.CommonTool import show_info_message, show_question_message
 
 
 class mainWindow(QMainWindow):
@@ -102,6 +103,9 @@ class mainWindow(QMainWindow):
         self.actionSegment = QAction("地物提取", self)
         self.actionPostClump = QAction("聚类", self)
         self.actionRasterToVector = QAction("栅格转矢量", self)
+        self.actionSplitDataSet = QAction("划分数据集", self)
+        self.actionSplitDataSet.setToolTip("将数据集划分成训练集、验证集和测试集") # 工具栏悬停提示
+        #self.actionSplitDataSet.setStatusTip("将数据集分割成训练集、验证集和测试集")  # 状态栏提示
         self.actionAbout = QAction("关于", self)
         self.setIcons()# 设置工具栏按钮图标
 
@@ -152,6 +156,7 @@ class mainWindow(QMainWindow):
         self.actionSegment.triggered.connect(self.segment)
         self.actionPostClump.triggered.connect(self.postClump)
         self.actionRasterToVector.triggered.connect(self.rasterToVector) 
+        self.actionSplitDataSet.triggered.connect(self.splitDataSet)
         self.actionAbout.triggered.connect(self.about) 
 
         # create the map tools
@@ -169,6 +174,7 @@ class mainWindow(QMainWindow):
         sampleMenu = menuBar.addMenu('样本')
         trainMenu = menuBar.addMenu('训练')
         processMenu = menuBar.addMenu('处理')   
+        toolMenu = menuBar.addMenu('工具')  
         helpMenu = menuBar.addMenu('帮助')   
         fileMenu.addAction(self.actionNewProject)# 将“新建工程”菜单项添加到“文件”菜单中
         fileMenu.addAction(self.actionOpenProject) 
@@ -206,6 +212,7 @@ class mainWindow(QMainWindow):
         processMenu.addSeparator()
         processMenu.addAction(self.actionPostClump)
         processMenu.addAction(self.actionRasterToVector)
+        toolMenu.addAction(self.actionSplitDataSet)
         helpMenu.addAction(self.actionAbout)
 
         # 工具栏
@@ -249,8 +256,10 @@ class mainWindow(QMainWindow):
         toolBar.addAction(self.actionSegment)  
         toolBar.addSeparator()   
         toolBar.addAction(self.actionPostClump)
-        toolBar.addAction(self.actionRasterToVector)      
-           
+        toolBar.addAction(self.actionRasterToVector)  
+        toolBar.addSeparator()      
+        toolBar.addAction(self.actionSplitDataSet)  
+
         # 状态栏
         statusBar = self.statusBar()  # 确保状态栏被创建
         statusBar.setSizeGripEnabled(False)  # 禁用大小调整手柄       
@@ -322,575 +331,6 @@ class mainWindow(QMainWindow):
 
         self.pan()# 设置默认功能          
 
-    def zoomIn(self):
-        self.canvas.setMapTool(self.toolZoomIn)
-
-    def zoomOut(self):
-        self.canvas.setMapTool(self.toolZoomOut)
-
-    def pan(self):
-        self.canvas.setMapTool(self.toolPan)
-
-    def fullExtent(self):
-        self.canvas.zoomToFullExtent()
-
-    def showLayerView(self,checked):
-        if checked:
-            self.tocView_dock.setVisible(True)  # 不显示
-        else:
-            self.tocView_dock.setVisible(False)  # 显示
-
-    def on_tocViewDock_visibility_changed(self,visible):  
-        if not visible: 
-            self.actionLayerView.setChecked(False)
-        else:
-            self.actionLayerView.setChecked(True)
-
-    def on_tableViewDock_visibility_changed(self,visible):
-        if not visible: 
-            self.actionSamplesView.setChecked(False)
-        else:
-            self.actionSamplesView.setChecked(True)
-
-    def showSamplesView(self,checked):
-        if checked:
-            self.tableView_dock.setVisible(True)  # 显示
-        else:
-            self.tableView_dock.setVisible(False)  # 显示  
-
-    def layerClicked(self):
-        curLayer: QgsMapLayer = self.tocView.currentLayer()
-        if curLayer and type(curLayer) == QgsVectorLayer and not curLayer.readOnly():
-            self.actionEditSample.setEnabled(True)
-        else:
-            self.actionEditSample.setEnabled(False)
-
-    def editSample(self):
-        if self.actionEditSample.isChecked():
-            self.editTempLayer : QgsVectorLayer = self.tocView.currentLayer()
-            self.editTempLayer.startEditing()
-        else:
-            saveShpEdit = QMessageBox.question(self, '保存编辑', "确定要将编辑内容保存到内存吗？", QMessageBox.Yes | QMessageBox.No,QMessageBox.No)
-            if saveShpEdit == QMessageBox.Yes:
-                self.editTempLayer.commitChanges()
-            else:
-                self.editTempLayer.rollBack()
-    
-            self.canvas.refresh()
-            self.pan()
-            self.actionEditSample.setEnabled(False)
-            self.editTempLayer = None
-
-    def drawPolygon(self):  
-        from tools.PolygonMapTool import PolygonMapTool
-        if self.editTempLayer == None:
-            QMessageBox.warning(self, '警告', '您没有编辑中的矢量！')
-            return
-        if self.canvas.mapTool():
-            self.canvas.mapTool().deactivate()
-        self.polygonTool = PolygonMapTool(self.canvas, self.editTempLayer, self)
-        self.canvas.setMapTool(self.polygonTool)
-
-    def deleteSample(self):
-        if self.editTempLayer == None:
-            QMessageBox.information(self, '警告', '您没有编辑中矢量')
-            return
-        if len(self.editTempLayer.selectedFeatureIds()) == 0:
-            QMessageBox.information(self, '删除选中矢量', '您没有选择任何矢量')
-        else:
-            self.editTempLayer.deleteSelectedFeatures()
-
-    def evalSample(self):
-        from dialog.EvalSampleDialog import Ui_Dialog
-        # 创建一个对话框实例，这里我们假设对话框是基于 QDialog 的
-        self.evalSampleDialog = QDialog(self)
-        self.ui_evalSample = Ui_Dialog()
-        self.ui_evalSample.setupUi(self.evalSampleDialog)
-        # 显示对话框
-        result = self.evalSampleDialog.exec_()  # 这会阻塞，直到对话框关闭
- 
-        if result == QDialog.Accepted:
-            from algorithm.EvalSampleThread import EvalSampleThread
-            self.thread = EvalSampleThread(self.ui_evalSample, self.progress_bar)
-            self.thread.finished.connect(self.on_evalSample_finished)  # 连接信号到槽
-            self.thread.start()
-        elif result == QDialog.Rejected:
-            print("User clicked Close or pressed Escape")
-
-    def on_evalSample_finished(self,result):
-        print(result)
-
-    def makeSample(self):
-        from dialog.MakeSampleDiaolog import Ui_Dialog
-        # 创建一个对话框实例，这里我们假设对话框是基于 QDialog 的
-        self.makeSampleDialog = QDialog(self)
-        self.ui_makeSample = Ui_Dialog()
-        self.ui_makeSample.setupUi(self.makeSampleDialog)
-        # 显示对话框
-        result = self.makeSampleDialog.exec_()  # 这会阻塞，直到对话框关闭
- 
-        if result == QDialog.Accepted:
-            from algorithm.MakeSampleThread import MakeSampleThread
-            self.thread = MakeSampleThread(self.ui_makeSample, self.progress_bar)
-            self.thread.finished.connect(self.on_makeSample_finished)  # 连接信号到槽
-            self.thread.start()
-        elif result == QDialog.Rejected:
-            print("User clicked Close or pressed Escape")
-    
-    def on_makeSample_finished(self, result):
-        print(result)  # 在主线程中处理结果
-
-    def querySample(self):
-        from dialog.QuerySampleDialog import Ui_Dialog
-        # 创建一个对话框实例，这里我们假设对话框是基于 QDialog 的
-        self.querySampleDialog = QDialog(self)
-        self.ui_querySample = Ui_Dialog()
-        self.ui_querySample.setupUi(self.querySampleDialog)
-        # 显示对话框
-        result = self.querySampleDialog.exec_()
-
-        if result == QDialog.Accepted:
-            # 启动子线程
-            from algorithm.QuerySampleThread import QuerySampleThread
-            self.thread_query = QuerySampleThread(self.ui_querySample, self.progress_bar)
-            self.thread_query.finished.connect(self.on_query_finished)  # 连接信号到槽
-            self.thread_query.start()  
-            self.actionCloseSamples.setEnabled(True)
-        elif result == QDialog.Rejected:
-            print("User clicked Close or pressed Escape")
-
-    def on_query_finished(self,result):
-        print(result)
-        import time
-        from osgeo import ogr
-        ogr.UseExceptions()
-        time_start=time.time()
-        self.progress_bar.setText('开始处理...')
-        samplelists = self.thread_query.sampleList
-        count = len(samplelists)
-        #print(count)
-        for index1,sample in enumerate(samplelists):
-            rangefile = sample+'SamplesRange.shp'
-            driver = ogr.GetDriverByName("ESRI Shapefile")
-            data_source:ogr.DataSource = driver.Open(rangefile, 0)  # 0只读模式
-            if data_source is None:
-                print(f"无法打开文件:{rangefile}")
-                return
-            else:
-                layer = data_source.GetLayer()
-
-            # 获取输入图层的几何类型和字段定义
-            feature_count = layer.GetFeatureCount()
-            # 遍历每个要素
-            for index2,feature in enumerate(layer):
-                self.progress_bar.setText(f"开始处理({index1+1}/{count}): {int((index2+1) * 100 / feature_count)}%")
-                # 确定输出文件名
-                name  = feature.GetField("Name")
-                type = feature.GetField("Bz")
-                loss = feature.GetField("Loss")
-                acc = feature.GetField("Acc")
-                recall = feature.GetField("Recall")
-                iou = feature.GetField("Iou")
-                path = feature.GetField("Path")
-                checkbox_item = QStandardItem()
-                checkbox_item.setCheckable(True)
-                #checkbox_item.setCheckState(Qt.Unchecked)  # 可选：设置初始检查状态                               
-                row = [QStandardItem(name), QStandardItem(type), QStandardItem(loss), QStandardItem(acc), QStandardItem(recall), QStandardItem(iou), QStandardItem(path), checkbox_item]
-                self.sampleModel.appendRow(row)
-        self.tableView_sampleList.resizeColumnsToContents()
-        time_end = time.time()
-        self.progress_bar.setText(f"处理完成: 花费时间 {((time_end-time_start)/60.0):.2f} 分钟")
-
-    def importSample(self):
-        from dialog.ImportSamplesDialog import Ui_Dialog
-        # 创建一个对话框实例，这里我们假设对话框是基于 QDialog 的
-        self.importSampleDialog = QDialog(self)
-        self.ui_importSample = Ui_Dialog()
-        self.ui_importSample.setupUi(self.importSampleDialog)
-        # 显示对话框
-        result = self.importSampleDialog.exec_()
-
-        if result == QDialog.Accepted:
-            from lxml import etree
-            parser = etree.XMLParser(remove_blank_text=True)  # 移除空白文本节点
-            # XML文件的路径
-            from DeeplearningSystem import sample_cofing_path
-            # 加载现有 XML
-            tree = etree.parse(sample_cofing_path, parser)
-        
-            # 查找特定ID的节点
-            nodes = tree.xpath(f'//SamplePath[@Name="{self.ui_importSample.lineEdit_labelName.text()}"]')
-            if not nodes:
-                node1 = tree.xpath(f'//SampleClass[@EnglishName="{self.ui_importSample.lineEdit_Class.text()}"]')[0]
-                # 创建新节点
-                new_node = etree.SubElement(node1, 'SamplePath', 
-                                            attrib={'Type': self.ui_importSample.lineEdit_labelType.text(),
-                                                    'Size': self.ui_importSample.lineEdit_labelSize.text(),
-                                                    'GSD': self.ui_importSample.lineEdit_labelGSD.text(),
-                                                    'Acc': self.ui_importSample.lineEdit_labelAcc.text(),
-                                                    'Recall': self.ui_importSample.lineEdit_labelRecall.text(),
-                                                    'IOU': self.ui_importSample.lineEdit_labelIOU.text(),
-                                                    'Name': self.ui_importSample.lineEdit_labelName.text(),
-                                                    'ValSetNums': self.ui_importSample.lineEdit_labelValNums.text()
-                                                    }).text = self.ui_importSample.lineEdit_SamplesPath.text()+"/"
-            else:
-                node = nodes[0]
-                saveSample = QMessageBox.question(self, '样本导入', "存在相同的样本，确定要导入吗？\n如果导入,将会覆盖！", QMessageBox.Yes | QMessageBox.No,QMessageBox.No)
-                if saveSample == QMessageBox.Yes:
-                    node.text = self.ui_importSample.lineEdit_SamplesPath.text()+"/"  # 更新文本内容
-                else:
-                    return
-            # 保存修改
-            tree.write(sample_cofing_path, 
-                    encoding='utf-8', 
-                    xml_declaration=True, 
-                    pretty_print=True)      
-        elif result == QDialog.Rejected:
-            print("User clicked Close or pressed Escape")
-
-    # 删除样本库
-    def deleteSamples(self):
-        from dialog.DeleteSamplesDialog import Ui_Dialog
-        # 创建一个对话框实例，这里我们假设对话框是基于 QDialog 的
-        self.deleteSamplesDialog = QDialog(self)
-        self.ui_deleteSamples = Ui_Dialog()
-        self.ui_deleteSamples.setupUi(self.deleteSamplesDialog)
-        # 显示对话框
-        result = self.deleteSamplesDialog.exec_()
-
-        if result == QDialog.Accepted:
-            from lxml import etree
-            # XML文件的路径
-            from DeeplearningSystem import sample_cofing_path
-            # 加载现有 XML
-            tree = etree.parse(sample_cofing_path)
-
-            column_index = 4  # 假设复选框项在第三列（索引为4）
-            for row_index in range(self.ui_deleteSamples.model.rowCount()):                  
-                check_state = self.ui_deleteSamples.model.item(row_index, column_index).checkState()
-                if check_state == Qt.Checked:
-                    name = self.ui_deleteSamples.sampleList[row_index]
-                    # 查找特定ID的节点
-                    try:
-                        # 尝试获取节点
-                        node = tree.xpath(f'//SamplePath[@Name="{name}"]')[0]
-                        if node is not None:
-                            deleteSample = QMessageBox.question(self, '删除样本库', f"确定要删除名称为“{name}”的样本库吗？", QMessageBox.Yes | QMessageBox.No,QMessageBox.No)
-                            if deleteSample == QMessageBox.Yes:
-                                node.getparent().remove(node)
-                            else:
-                                return                                
-                    except IndexError:
-                        print("未找到匹配的节点")
-                    except etree.XPathEvalError as e:
-                        print(f"XPath表达式错误: {e}")
-                    except Exception as e:
-                        print(f"发生错误: {e}")
-                    # 保存修改
-                    tree.write(sample_cofing_path, 
-                            encoding='utf-8', 
-                            xml_declaration=True, 
-                            pretty_print=True)
-
-    # 关闭样本库
-    def closeSamples(self):
-        self.sampleModel.removeRows(0,self.model.rowCount())
-        self.tableView_sampleList.resizeColumnsToContents()
-        self.actionCloseSamples.setEnabled(False)
-
-    def on_tableView_double_clicked(self, index):
-        row = index.row()
-        name_index = index.sibling(row, 0)
-        name = name_index.data()
-        path_index = index.sibling(row, 6)  # 获取同一行的其他列索引
-        path = path_index.data()  # 获取单元格数据
-        image_file = f'{path}/image/{name}.tif'
-        shape_file = f'{path}/vector/{name}.shp'
-        #print(image_file,shape_file)
-        self.addRaster(image_file)
-        self.addVector(shape_file)
-
-    def modelTrain(self):
-        from dialog.TrainDialog import Ui_Dialog
-        # 创建一个对话框实例，这里我们假设对话框是基于 QDialog 的
-        self.dialog = QDialog(self)
-        self.ui = Ui_Dialog()
-        self.ui.setupUi(self.dialog)
-        # 显示对话框
-        result = self.dialog.exec_()  # 这会阻塞，直到对话框关闭
- 
-        if result == QDialog.Accepted:
-            self.actionStopTrain.setEnabled(True)
-            self.actionWatchTrain.setEnabled(True)
-            # sample
-            lines_train = []
-            train_nums = 0
-            lines_val = []
-            val_nums = 0
-            column_index = 4  # 假设复选框项在第三列（索引为4）
-            for row_index in range(self.ui.model.rowCount()):                  
-                check_state = self.ui.model.item(row_index, column_index).checkState()
-                if check_state == Qt.Checked:
-                    samplerange_file = self.ui.sampleList[row_index]+'SamplesRange.shp'
-                    from osgeo import ogr
-                    driver = ogr.GetDriverByName("ESRI Shapefile")
-                    data_source:ogr.DataSource = driver.Open(samplerange_file, 0)  # 0只读模式
-                    if data_source is None:
-                        print("无法打开文件")
-                    else:
-                        layer = data_source.GetLayer()
-                    for feature in layer:
-                        bz_vale = feature.GetField("Bz")
-                        name_value = feature.GetField("Name")
-                        path_value = feature.GetField("Path")
-                        sample = f'{path_value}/image/{name_value}.tif\n'
-                        if bz_vale == "train":
-                            lines_train.append(sample)
-                            train_nums+=1
-                        else:
-                            lines_val.append(sample)
-                            val_nums+=1
-                    data_source.Release()
-            from DeeplearningSystem import train_set,val_set
-            with open(train_set, 'w', encoding='utf-8') as file:
-                file.write(f'{train_nums}\n')
-                file.writelines(lines_train)
-            with open(val_set, 'w', encoding='utf-8') as file:
-                file.write(f'{val_nums}\n')
-                file.writelines(lines_val)
-            # 初始化日志监视对话框
-            from dialog.LogDialog import Ui_Dialog as LogDialog     
-            self.log_dialog = QDialog(self)
-            self.ui_log = LogDialog()
-            self.ui_log.setupUi(self.log_dialog)    
-            # 启动训练子线程
-            from algorithm.TrainThread import TrainThread
-            self.thread_train = TrainThread(self.ui, self.progress_bar)
-            self.thread_train.finished.connect(self.on_train_finished)  # 连接信号到槽
-            self.thread_train.msg.connect(self.on_train_msg)  # 连接信号到槽
-            self.thread_train.start()                       
-        elif result == QDialog.Rejected:
-            print("User clicked Close or pressed Escape")
-
-    def on_train_finished(self, result):
-        QMessageBox.information(self, '提示', f"训练完成！", QMessageBox.Ok)
-
-    def on_train_msg(self, result):
-        self.ui_log.textEdit_Log.append(result)
-
-    def stopTrain(self):  
-        result = QMessageBox.question(self, '信息', "确定要终止训练？", QMessageBox.Yes | QMessageBox.No,
-                                        QMessageBox.No)
-        if result == QMessageBox.Yes:
-            self.thread_train.stop()
-
-    def watchTrain(self):                    
-        # 显示对话框
-        self.log_dialog.show()
-     
-    def selectFeature(self):
-        if self.actionSelectFeature.isChecked():
-            if self.canvas.mapTool():
-                self.canvas.unsetMapTool(self.canvas.mapTool())
-            self.toolSelectFeature = QgsMapToolIdentifyFeature(self.canvas)
-            self.toolSelectFeature.setAction(self.actionSelectFeature)
-            self.toolSelectFeature.setCursor(Qt.ArrowCursor)
-            self.toolSelectFeature.featureIdentified.connect(self.selectToolIdentified)
-            layers = self.canvas.layers()
-            if layers:
-                self.toolSelectFeature.setLayer(self.tocView.currentLayer())
-            self.canvas.setMapTool(self.toolSelectFeature)
-        else:
-            if self.canvas.mapTool():
-                self.canvas.unsetMapTool(self.canvas.mapTool())
-
-    def selectToolIdentified(self,feature):
-        #print(feature.id())
-        layerTemp: QgsVectorLayer = self.tocView.currentLayer()
-        if layerTemp.type() == QgsMapLayerType.VectorLayer:
-            if feature.id() in layerTemp.selectedFeatureIds():
-                layerTemp.deselect(feature.id())
-            else:
-                layerTemp.removeSelection()
-                layerTemp.select(feature.id())
-
-    def drawRect(self):  
-        from tools.RectangleMapTool import RectangleMapTool
-        self.toolDrawRect = RectangleMapTool(self.canvas)
-        self.toolDrawRect.setAction(self.actionDrawRect)
-        self.canvas.setMapTool(self.toolDrawRect)
-
-    def clearDraw(self):  
-        self.toolDrawRect.reset()    
-        self.canvas.scene().removeItem(self.toolDrawRect.rubberBand)
-        self.pan()
-
-    def about(self):
-        import datetime,json
-        from cryptography.fernet import Fernet
-        from DeeplearningSystem import key_path,lic_path
-        # 从文件加载密钥
-        with open(key_path, 'rb') as key_file:
-            key = key_file.read()           
-        # 创建Fernet对象
-        fernet = Fernet(key)
-        with open(lic_path, "rb") as f:
-            encrypted_license = f.read()         
-        license_json = fernet.decrypt(encrypted_license).decode()
-        license_data = json.loads(license_json)
-        software_version = license_data.get("software_version")
-        user_id = license_data.get("user_id")
-        expiration_date = license_data.get("expiration_date")
-        QMessageBox.information(self, '提示', 
-                                f'软件信息：基于深度学习的遥感影像信息提取系统\n构建日期：2024-12-31\n版权所有：河南省地球物理空间信息研究院有限公司\n技术邮箱：malianwei2009@163.com\n许可截至：{expiration_date}',
-                                  QMessageBox.Ok)
-    # 栅格转矢量
-    def rasterToVector(self):
-        from dialog.RasterToVectorDialog import Ui_Dialog
-        from qgis.PyQt.QtWidgets import QDialog
-        # 创建一个对话框实例，这里我们假设对话框是基于 QDialog 的
-        self.dialog = QDialog(self)
-        self.ui_raserToVector = Ui_Dialog()
-        self.ui_raserToVector.setupUi(self.dialog)
-        # 显示对话框
-        result = self.dialog.exec_()  # 这会阻塞，直到对话框关闭
- 
-        if result == QDialog.Accepted:
-            from algorithm.RasterToVectorThread import RasterToVectorThread
-            self.thread = RasterToVectorThread(self.ui_raserToVector, self.progress_bar)
-            self.thread.finished.connect(self.on_rasterToVector_finished)  # 连接信号到槽
-            self.thread.start()
-        elif result == QDialog.Rejected:
-            print("User clicked Close or pressed Escape")
-
-    def on_rasterToVector_finished(self, result):
-        print(result)  # 在主线程中处理结果
-        self.addVector(result)
-
-    # 分类后处理-聚类
-    def postClump(self):
-        from dialog.PostProcessDialog import Ui_Dialog
-        from qgis.PyQt.QtWidgets import QDialog
-        # 创建一个对话框实例，这里我们假设对话框是基于 QDialog 的
-        self.dialog = QDialog(self)
-        self.ui_postProcessDialog = Ui_Dialog()
-        self.ui_postProcessDialog.setupUi(self.dialog)
-        # 显示对话框
-        result = self.dialog.exec_()  # 这会阻塞，直到对话框关闭
- 
-        if result == QDialog.Accepted:
-            from algorithm.PostClumpThread import PostClumpThread
-            self.thread = PostClumpThread(self.ui_postProcessDialog, self.progress_bar, self.toolDrawRect)
-            self.thread.finished.connect(self.on_postclump_finished)  # 连接信号到槽
-            self.thread.start()
-        elif result == QDialog.Rejected:
-            print("User clicked Close or pressed Escape")
-
-    def on_postclump_finished(self, result):
-        print(result)  # 在主线程中处理结果
-        self.addRaster(result)
-
-    #######
-    def setIcons(self):
-        # 获取当前脚本所在的目录
-        from DeeplearningSystem import base_dir   
-        # 设置图标
-        icon_mainWindow = QIcon()
-        icon_mainWindow_path = join(base_dir, 'settings/icon', 'mainWindow.png')
-        icon_mainWindow.addPixmap(QPixmap(icon_mainWindow_path), QIcon.Normal, QIcon.Off)
-        self.setWindowIcon(icon_mainWindow)
-
-        icon_newProject = join(base_dir, 'settings/icon', 'SystemProject_NewProject.png')# 替换为你的图标文件路径
-        self.actionNewProject.setIcon(QIcon(icon_newProject))
-
-        icon_openProject = join(base_dir, 'settings/icon', 'SystemProject_OpenProject.png')
-        self.actionOpenProject.setIcon(QIcon(icon_openProject))
-
-        icon_saveProject = join(base_dir, 'settings/icon', 'SystemProject_SaveProject.png')
-        self.actionSaveProject.setIcon(QIcon(icon_saveProject))
-
-        icon_openImage = join(base_dir, 'settings/icon', 'DataLoader_Raster.png')
-        self.actionOpenRas.setIcon(QIcon(icon_openImage))
-
-        icon_openVector = join(base_dir, 'settings/icon', 'DataLoader_Vector.png')
-        self.actionOpenVec.setIcon(QIcon(icon_openVector))
-
-        icon_zoomIn = join(base_dir, 'settings/icon', 'MapBrowser_ZoomIn.png') 
-        self.actionZoomIn.setIcon(QIcon(icon_zoomIn))
-
-        icon_zoomOut = join(base_dir, 'settings/icon', 'MapBrowser_ZoomOut.png')
-        self.actionZoomOut.setIcon(QIcon(icon_zoomOut))
-
-        icon_Pan = join(base_dir, 'settings/icon', 'MapBrowser_Pan.png')
-        self.actionPan.setIcon(QIcon(icon_Pan))
-
-        icon_FullExten = join(base_dir, 'settings/icon', 'MapBrowser_FullExtent.png')
-        self.actionFullExtent.setIcon(QIcon(icon_FullExten))
-
-        #icon_ShowView = join(base_dir, 'settings/icon', 'check.png')
-        #self.actionLayerView.setIcon(QIcon(icon_ShowView))
-        #self.actionSamplesView.setIcon(QIcon(icon_ShowView))
-
-        icon_EditSample = join(base_dir, 'settings/icon', 'VectorEditor_Edit.png')
-        self.actionEditSample.setIcon(QIcon(icon_EditSample))
-
-        icon_DrawPolygon = join(base_dir, 'settings/icon', 'VectorEditor_DrawPolygonFeature.png')
-        self.actionDrawPolygon.setIcon(QIcon(icon_DrawPolygon))
-
-        icon_SelectSample = join(base_dir, 'settings/icon', 'VectorEditor_SelectFeature.png')
-        self.actionSelectSample.setIcon(QIcon(icon_SelectSample))
-
-        icon_DeleteSample = join(base_dir, 'settings/icon', 'VectorEditor_AddFeature.png')
-        self.actionDeleteSample.setIcon(QIcon(icon_DeleteSample))
-
-        icon_MakeSample = join(base_dir, 'settings/icon', 'MakeSample.png')
-        self.actionMakeSample.setIcon(QIcon(icon_MakeSample))
-
-        icon_EvaleSample = join(base_dir, 'settings/icon', 'Sample_Evalue.png')
-        self.actionEvalSample.setIcon(QIcon(icon_EvaleSample))
-
-        icon_ImportSample = join(base_dir, 'settings/icon', 'label_import.png')
-        self.actionImportSample.setIcon(QIcon(icon_ImportSample))
-
-        icon_DeleteSamples = join(base_dir, 'settings/icon', 'label_delete.png')
-        self.actionDeleteSamples.setIcon(QIcon(icon_DeleteSamples))
-
-        icon_QuerySample = join(base_dir, 'settings/icon', 'Query.png')
-        self.actionQuerySample.setIcon(QIcon(icon_QuerySample))
-
-        icon_CloseSamples = join(base_dir, 'settings/icon', 'label_close.png')
-        self.actionCloseSamples.setIcon(QIcon(icon_CloseSamples))
-
-        icon_StartTrain = join(base_dir, 'settings/icon', 'Train_Start.png')
-        self.actionModelTrain.setIcon(QIcon(icon_StartTrain))
-
-        icon_StopTrain = join(base_dir, 'settings/icon', 'Train_Stop.png')
-        self.actionStopTrain.setIcon(QIcon(icon_StopTrain))
-
-        icon_WatchTrain = join(base_dir, 'settings/icon', 'Train_Watch.png')
-        self.actionWatchTrain.setIcon(QIcon(icon_WatchTrain))
-        
-        icon_SeclectFeature = join(base_dir, 'settings/icon', 'MarkTool_SelectElement.png')
-        self.actionSelectFeature.setIcon(QIcon(icon_SeclectFeature))
-
-        icon_DrawRect = join(base_dir, 'settings/icon', 'MarkTool_DrawRectElement.png')
-        self.actionDrawRect.setIcon(QIcon(icon_DrawRect))       
-        
-        icon_ClearDraw = join(base_dir, 'settings/icon', 'MainCategory_DeleteAllSelect.png')  
-        self.actionClearDraw.setIcon(QIcon(icon_ClearDraw))       
-
-        icon_Segment = join(base_dir, 'settings/icon', 'Segment.png') 
-        self.actionSegment.setIcon(QIcon(icon_Segment))
-
-        icon_PostClump = join(base_dir, 'settings/icon', 'ImgClass_Post_Clump.png') 
-        self.actionPostClump.setIcon(QIcon(icon_PostClump))
-        
-        icon_RasterToVector = join(base_dir, 'settings/icon', 'Utility_RasterToVector.png')
-        self.actionRasterToVector.setIcon(QIcon(icon_RasterToVector))
-
-        icon_About = join(base_dir, 'settings/icon', 'MainCategory_About.png')
-        self.actionAbout.setIcon(QIcon(icon_About))
-    
     # 新建工程
     def newProject(self):
         # 创建一个新的项目
@@ -949,35 +389,645 @@ class mainWindow(QMainWindow):
         if  path_to_vec=="":
             return
         self.addVector(path_to_vec)
-         
-    # 信息提取
-    def segment(self, path):
-        #QMessageBox.information(self, '提示', '信息提取！', QMessageBox.Ok)
-        from dialog.SegmentDialog import Ui_Dialog
-        from qgis.PyQt.QtWidgets import QDialog
-        # 创建一个对话框实例，这里我们假设对话框是基于 QDialog 的
-        self.dialog = QDialog(self)
-        self.ui = Ui_Dialog()
-        self.ui.setupUi(self.dialog)
+
+    # 视图放大         
+    def zoomIn(self):
+        self.canvas.setMapTool(self.toolZoomIn)
+
+    # 视图缩小
+    def zoomOut(self):
+        self.canvas.setMapTool(self.toolZoomOut)
+
+    # 视图平移
+    def pan(self):
+        self.canvas.setMapTool(self.toolPan)
+
+    # 视图全图
+    def fullExtent(self):
+        self.canvas.zoomToFullExtent()
+
+    # 图层面板显示
+    def showLayerView(self,checked):
+        if checked:
+            self.tocView_dock.setVisible(True)  # 不显示
+        else:
+            self.tocView_dock.setVisible(False)  # 显示
+    # 图层面板是否可见事件
+    def on_tocViewDock_visibility_changed(self,visible):  
+        if not self.isMinimized():
+            if not visible: 
+                self.actionLayerView.setChecked(False)
+            else:
+                self.actionLayerView.setChecked(True)
+
+    # 样本库面板显示    
+    def showSamplesView(self,checked):
+        if checked:
+            self.tableView_dock.setVisible(True)  # 显示
+        else:
+            self.tableView_dock.setVisible(False)  # 显示  
+    # 样本库面板是否可见事件
+    def on_tableViewDock_visibility_changed(self,visible):
+            if not self.isMinimized():
+                if not visible: 
+                    self.actionSamplesView.setChecked(False)
+                else:
+                    self.actionSamplesView.setChecked(True)
+    # 样本库面板双击事件
+    def on_tableView_double_clicked(self, index):
+        row = index.row()
+        name_index = index.sibling(row, 0)
+        name = name_index.data()
+        path_index = index.sibling(row, 6)  # 获取同一行的其他列索引
+        path = path_index.data()  # 获取单元格数据
+        image_file = f'{path}/image/{name}.tif'
+        from os.path import exists
+        if not exists(image_file):
+            image_file = f'{path}/image/{name}.tiff'
+        shape_file = f'{path}/vector/{name}.shp'
+        #print(image_file,shape_file)
+        self.addRaster(image_file)
+        self.addVector(shape_file)
+
+    # 编辑矢量
+    def editSample(self):
+        if self.actionEditSample.isChecked():
+            self.editTempLayer : QgsVectorLayer = self.tocView.currentLayer()
+            self.editTempLayer.startEditing()
+        else:
+            saveShpEdit = show_question_message(self, '保存编辑', "确定要将编辑内容保存到内存吗？")
+            if saveShpEdit == QMessageBox.Yes:
+                self.editTempLayer.commitChanges()
+            else:
+                self.editTempLayer.rollBack()
+    
+            self.canvas.refresh()
+            self.pan()
+            self.actionEditSample.setEnabled(False)
+            self.editTempLayer = None
+    # 激活“编辑矢量”功能
+    def layerClicked(self):
+        curLayer: QgsMapLayer = self.tocView.currentLayer()
+        if curLayer and type(curLayer) == QgsVectorLayer and not curLayer.readOnly():
+            self.actionEditSample.setEnabled(True)
+        else:
+            self.actionEditSample.setEnabled(False)
+   
+    # 画多边形
+    def drawPolygon(self):  
+        from tools.PolygonMapTool import PolygonMapTool
+        if self.editTempLayer == None:
+            show_info_message(self, '警告', '您没有编辑中的矢量！')
+            return
+        if self.canvas.mapTool():
+            self.canvas.mapTool().deactivate()
+        self.polygonTool = PolygonMapTool(self.canvas, self.editTempLayer, self)
+        self.canvas.setMapTool(self.polygonTool)
+
+    # 选择要素
+    def selectFeature(self):
+        if self.actionSelectFeature.isChecked():
+            if self.canvas.mapTool():
+                self.canvas.unsetMapTool(self.canvas.mapTool())
+            self.toolSelectFeature = QgsMapToolIdentifyFeature(self.canvas)
+            self.toolSelectFeature.setAction(self.actionSelectFeature)
+            self.toolSelectFeature.setCursor(Qt.ArrowCursor)
+            self.toolSelectFeature.featureIdentified.connect(self.selectToolIdentified)
+            layers = self.canvas.layers()
+            if layers:
+                self.toolSelectFeature.setLayer(self.tocView.currentLayer())
+            self.canvas.setMapTool(self.toolSelectFeature)
+        else:
+            if self.canvas.mapTool():
+                self.canvas.unsetMapTool(self.canvas.mapTool())
+    # 选择要素用到的工具
+    def selectToolIdentified(self,feature):
+        #print(feature.id())
+        layerTemp: QgsVectorLayer = self.tocView.currentLayer()
+        if layerTemp.type() == QgsMapLayerType.VectorLayer:
+            if feature.id() in layerTemp.selectedFeatureIds():
+                layerTemp.deselect(feature.id())
+            else:
+                layerTemp.removeSelection()
+                layerTemp.select(feature.id())
+
+    # 删除要素
+    def deleteSample(self):
+        if self.editTempLayer == None:
+            show_info_message(self, '警告', '您没有编辑中矢量')
+            return
+        if len(self.editTempLayer.selectedFeatureIds()) == 0:
+            show_info_message(self, '删除选中矢量', '您没有选择任何矢量')
+        else:
+            self.editTempLayer.deleteSelectedFeatures()
+
+    # 样本制作
+    def makeSample(self):
+        from dialog.MakeSamplesDiaolog import MakeSamplesDialog
+        self.makeSampleDialog = MakeSamplesDialog()
         # 显示对话框
-        result = self.dialog.exec_()  # 这会阻塞，直到对话框关闭
+        result = self.makeSampleDialog.exec_()  # 这会阻塞，直到对话框关闭
+ 
+        if result == QDialog.Accepted:
+            from algorithm.MakeSampleThread import MakeSampleThread
+            self.thread = MakeSampleThread(self.makeSampleDialog, self.progress_bar)
+            self.thread.finished.connect(self.on_makeSample_finished)  # 连接信号到槽
+            self.thread.start()
+        elif result == QDialog.Rejected:
+            print("User clicked Close or pressed Escape")
+    # 样本制作后事件    
+    def on_makeSample_finished(self, result):
+        makeSample = show_question_message(self, '样本制作', f"需要将已制作完成的样本入库吗？")
+        if makeSample == QMessageBox.Yes:
+            sampleClass, samplePath = result
+            result = samplePath.rsplit('/', 6)
+            sampleName = result[5]
+            print(f'sampleName={sampleName}')
+
+            from lxml import etree
+            parser = etree.XMLParser(remove_blank_text=True)  # 移除空白文本节点
+            # XML文件的路径
+            from DeeplearningSystem import sample_cofing_path
+            # 加载现有 XML
+            tree = etree.parse(sample_cofing_path, parser)
+        
+            # 查找特定ID的节点
+            nodes = tree.xpath(f'//SamplePath[@Name="{sampleName}"]')
+            if not nodes:
+                node1 = tree.xpath(f'//SampleClass[@EnglishName="{sampleClass}"]')[0]
+                # 创建新节点
+                new_node = etree.SubElement(node1, 'SamplePath', 
+                                            attrib={'Type': self.ui_importSample.lineEdit_labelType.text(),
+                                                    'Size': self.ui_importSample.lineEdit_labelSize.text(),
+                                                    'GSD': self.ui_importSample.lineEdit_labelGSD.text(),
+                                                    'Acc': self.ui_importSample.lineEdit_labelAcc.text(),
+                                                    'Recall': self.ui_importSample.lineEdit_labelRecall.text(),
+                                                    'IOU': self.ui_importSample.lineEdit_labelIOU.text(),
+                                                    'Name': self.ui_importSample.lineEdit_labelName.text(),
+                                                    'ValSetNums': self.ui_importSample.lineEdit_labelValNums.text()
+                                                    }).text = self.ui_importSample.lineEdit_SamplesPath.text()+"/"
+            else:
+                node = nodes[0]
+                saveSample = show_question_message(self, '样本导入', "存在相同的样本，确定要导入吗？\n如果导入,将会覆盖！")
+                if saveSample == QMessageBox.Yes:
+                    node.text = self.ui_importSample.lineEdit_SamplesPath.text()+"/"  # 更新文本内容
+                else:
+                    return
+            # 保存修改
+            tree.write(sample_cofing_path, 
+                    encoding='utf-8', 
+                    xml_declaration=True, 
+                    pretty_print=True) 
+            show_info_message(self, "信息", "样本导入完成!")
+
+    # 样本评估
+    def evalSample(self):
+        from dialog.EvalSamplesDialog import EvalSamplesDialog
+        self.evalSampleDialog = EvalSamplesDialog()
+        # 显示对话框
+        result = self.evalSampleDialog.exec_()  # 这会阻塞，直到对话框关闭
+ 
+        if result == QDialog.Accepted:
+            from algorithm.EvalSampleThread import EvalSampleThread
+            self.thread = EvalSampleThread(self.evalSampleDialog, self.progress_bar)
+            self.thread.finished.connect(self.on_evalSample_finished)  # 连接信号到槽
+            self.thread.start()
+        elif result == QDialog.Rejected:
+            print("User clicked Close or pressed Escape")
+    # 样本评估后事件
+    def on_evalSample_finished(self,result):
+        show_info_message(self,"提示","样本评估完成！")
+
+    # 样本库导入
+    def importSample(self):
+        from dialog.ImportSamplesDialog import ImportSamplesDialog
+        # 创建一个对话框实例，这里我们假设对话框是基于 QDialog 的
+        self.importSampleDialog = ImportSamplesDialog()
+    
+        # 显示对话框
+        result = self.importSampleDialog.exec_()
+
+        if result == QDialog.Accepted:
+            from lxml import etree
+            parser = etree.XMLParser(remove_blank_text=True)  # 移除空白文本节点
+            # XML文件的路径
+            from DeeplearningSystem import sample_cofing_path
+            # 加载现有 XML
+            tree = etree.parse(sample_cofing_path, parser)
+        
+            # 查找特定ID的节点
+            nodes = tree.xpath(f'//SamplePath[@Name="{self.importSampleDialog.lineEdit_labelName.text()}"]')
+            if not nodes:
+                node1 = tree.xpath(f'//SampleClass[@EnglishName="{self.importSampleDialog.lineEdit_Class.text()}"]')[0]
+                print(f'self.importSampleDialog.lineEdit_labelValNums.text()={self.importSampleDialog.lineEdit_labelValNums.text()}')
+                # 创建新节点
+                new_node = etree.SubElement(node1, 'SamplePath', 
+                                            attrib={'Type': self.importSampleDialog.lineEdit_labelType.text(),
+                                                    'Size': self.importSampleDialog.lineEdit_labelSize.text(),
+                                                    'GSD': self.importSampleDialog.lineEdit_labelGSD.text(),
+                                                    'Acc': self.importSampleDialog.lineEdit_labelAcc.text(),
+                                                    'Recall': self.importSampleDialog.lineEdit_labelRecall.text(),
+                                                    'IOU': self.importSampleDialog.lineEdit_labelIOU.text(),
+                                                    'Name': self.importSampleDialog.lineEdit_labelName.text(),
+                                                    'ValSetNums': self.importSampleDialog.lineEdit_labelValNums.text()
+                                                    }).text = self.importSampleDialog.lineEdit_SamplesPath.text()+"/"
+            else:
+                node = nodes[0]
+                saveSample = show_question_message(self, '样本导入', "存在相同的样本，确定要导入吗？\n如果导入，将会覆盖！")
+                if saveSample == QMessageBox.Yes:
+                    node.text = self.ui_importSample.lineEdit_SamplesPath.text()+"/"  # 更新文本内容
+                else:
+                    return
+            # 保存修改
+            tree.write(sample_cofing_path, 
+                    encoding='utf-8', 
+                    xml_declaration=True, 
+                    pretty_print=True)   
+            show_info_message(self, "信息", "样本导入完成!")   
+        elif result == QDialog.Rejected:
+            print("User clicked Close or pressed Escape")
+    
+    # 样本库删除
+    def deleteSamples(self):
+        from dialog.DeleteSamplesDialog import DeleteSamplesDialog
+        self.deleteSamplesDialog = DeleteSamplesDialog()
+        # 显示对话框
+        result = self.deleteSamplesDialog.exec_()
+
+        if result == QDialog.Accepted:
+            from lxml import etree
+            # XML文件的路径
+            from DeeplearningSystem import sample_cofing_path
+            # 加载现有 XML
+            tree = etree.parse(sample_cofing_path)
+
+            column_index = 4  # 假设复选框项在第三列（索引为4）
+            for row_index in range(self.deleteSamplesDialog.model.rowCount()):                  
+                check_state = self.deleteSamplesDialog.model.item(row_index, column_index).checkState()
+                if check_state == Qt.Checked:
+                    name = self.deleteSamplesDialog.sampleList[row_index]
+                    # 查找特定ID的节点
+                    try:
+                        # 尝试获取节点
+                        node = tree.xpath(f'//SamplePath[@Name="{name}"]')[0]
+                        if node is not None:
+                            deleteSample = show_question_message(self, '删除样本库', f"确定要删除名称为“{name}”的样本库吗？")
+                            if deleteSample == QMessageBox.Yes:
+                                node.getparent().remove(node)
+                            else:
+                                return                                
+                    except IndexError:
+                        print("未找到匹配的节点")
+                    except etree.XPathEvalError as e:
+                        print(f"XPath表达式错误: {e}")
+                    except Exception as e:
+                        print(f"发生错误: {e}")
+                    # 保存修改
+                    tree.write(sample_cofing_path, 
+                            encoding='utf-8', 
+                            xml_declaration=True, 
+                            pretty_print=True)
+                    show_info_message(self, "信息", "样本删除完成!")  
+    
+    # 样本库查询
+    def querySample(self):
+        from dialog.QuerySampleDialog import QuerySamplesDialog
+        self.querySampleDialog = QuerySamplesDialog()
+        # 显示对话框
+        result = self.querySampleDialog.exec_()
+
+        if result == QDialog.Accepted:
+            # 启动子线程
+            from algorithm.QuerySampleThread import QuerySampleThread
+            self.thread_query = QuerySampleThread(self.querySampleDialog, self.progress_bar)
+            self.thread_query.finished.connect(self.on_query_finished)  # 连接信号到槽
+            self.thread_query.start()  
+            self.actionCloseSamples.setEnabled(True)
+        elif result == QDialog.Rejected:
+            print("User clicked Close or pressed Escape")
+    # 样本库查询完成后响应事件
+    def on_query_finished(self,result):
+        print(result)
+        import time
+        from osgeo import ogr
+        ogr.UseExceptions()
+        time_start=time.time()
+        self.progress_bar.setText('开始处理...')
+        samplelists = self.thread_query.sampleList
+        count = len(samplelists)
+        #print(count)
+        for index1,sample in enumerate(samplelists):
+            rangefile = sample+'SamplesRange.shp'
+            driver = ogr.GetDriverByName("ESRI Shapefile")
+            data_source:ogr.DataSource = driver.Open(rangefile, 0)  # 0只读模式
+            if data_source is None:
+                print(f"无法打开文件:{rangefile}")
+                return
+            else:
+                layer = data_source.GetLayer()
+
+            # 获取输入图层的几何类型和字段定义
+            feature_count = layer.GetFeatureCount()
+            # 遍历每个要素
+            for index2,feature in enumerate(layer):
+                self.progress_bar.setText(f"开始处理({index1+1}/{count}): {int((index2+1) * 100 / feature_count)}%")
+                # 确定输出文件名
+                name  = feature.GetField("Name")
+                type = feature.GetField("Bz")
+                loss = feature.GetField("Loss")
+                acc = feature.GetField("Acc")
+                recall = feature.GetField("Recall")
+                iou = feature.GetField("Iou")
+                path = feature.GetField("Path")
+                checkbox_item = QStandardItem()
+                checkbox_item.setCheckable(True)
+                #checkbox_item.setCheckState(Qt.Unchecked)  # 可选：设置初始检查状态                               
+                row = [QStandardItem(name), QStandardItem(type), QStandardItem(loss), QStandardItem(acc), QStandardItem(recall), QStandardItem(iou), QStandardItem(path), checkbox_item]
+                self.sampleModel.appendRow(row)
+        self.tableView_sampleList.resizeColumnsToContents()
+        time_end = time.time()
+        self.progress_bar.setText(f"处理完成: 花费时间 {((time_end-time_start)/60.0):.2f} 分钟")
+
+    # 样本库关闭
+    def closeSamples(self):
+        self.sampleModel.removeRows(0,self.sampleModel.rowCount())
+        self.tableView_sampleList.resizeColumnsToContents()
+        self.actionCloseSamples.setEnabled(False)
+
+    # 模型训练
+    def modelTrain(self):
+        from dialog.TrainDialog import TrainDialog
+        self.trainDialog = TrainDialog()
+        result = self.trainDialog.exec_()  # 这会阻塞，直到对话框关闭
+ 
+        if result == QDialog.Accepted:
+            self.actionStopTrain.setEnabled(True)
+            self.actionWatchTrain.setEnabled(True)
+            # sample
+            lines_train = []
+            train_nums = 0
+            lines_val = []
+            val_nums = 0
+            column_index = 4  # 假设复选框项在第三列（索引为4）
+            for row_index in range(self.trainDialog.model.rowCount()):                  
+                check_state = self.trainDialog.model.item(row_index, column_index).checkState()
+                if check_state == Qt.Checked:
+                    samplerange_file = self.trainDialog.sampleList[row_index]+'SamplesRange.shp'
+                    from osgeo import ogr
+                    driver = ogr.GetDriverByName("ESRI Shapefile")
+                    data_source:ogr.DataSource = driver.Open(samplerange_file, 0)  # 0只读模式
+                    if data_source is None:
+                        print("无法打开文件")
+                    else:
+                        layer = data_source.GetLayer()
+                    for feature in layer:
+                        bz_vale = feature.GetField("Bz")
+                        name_value = feature.GetField("Name")
+                        path_value = feature.GetField("Path")
+                        sample = f'{path_value}/image/{name_value}.tif'
+                        from os.path import exists
+                        if not exists(sample):
+                            sample = f'{path_value}/image/{name_value}.tiff'
+                        sample = sample + '\n'
+                        if bz_vale == "train":
+                            lines_train.append(sample)
+                            train_nums+=1
+                        elif bz_vale == "val":
+                            lines_val.append(sample)
+                            val_nums+=1
+                    data_source.Release()
+            from DeeplearningSystem import train_set,val_set
+            with open(train_set, 'w', encoding='utf-8') as file:
+                file.write(f'{train_nums}\n')
+                file.writelines(lines_train)
+            with open(val_set, 'w', encoding='utf-8') as file:
+                file.write(f'{val_nums}\n')
+                file.writelines(lines_val)
+            # 初始化日志监视对话框
+            from dialog.LogDialog import LogDialog     
+            self.logDialog = LogDialog() 
+            # 启动训练子线程
+            from algorithm.TrainThread import TrainThread
+            self.thread_train = TrainThread(self.trainDialog, self.progress_bar)
+            self.thread_train.finished.connect(self.on_train_finished)  # 连接信号到槽
+            self.thread_train.msg.connect(self.on_train_msg)  # 连接信号到槽
+            self.thread_train.start()                       
+        elif result == QDialog.Rejected:
+            print("User clicked Close or pressed Escape")
+    # 模型训练后事件
+    def on_train_finished(self, result):
+        show_info_message(self, '提示', f"训练完成！")
+    # 模型训练中事件
+    def on_train_msg(self, result):
+        self.logDialog.textEdit_Log.append(result)
+
+    # 终止训练
+    def stopTrain(self):  
+        result = show_question_message(self, '信息', "确定要终止训练？")
+        if result == QMessageBox.Yes:
+            self.thread_train.stop()
+
+    # 监视训练
+    def watchTrain(self):                    
+        # 显示对话框
+        self.logDialog.show()
+
+    # 画矩形     
+    def drawRect(self):  
+        from tools.RectangleMapTool import RectangleMapTool
+        self.toolDrawRect = RectangleMapTool(self.canvas)
+        self.toolDrawRect.setAction(self.actionDrawRect)
+        self.canvas.setMapTool(self.toolDrawRect)
+
+    # 清绘
+    def clearDraw(self):  
+        self.toolDrawRect.reset()    
+        self.canvas.scene().removeItem(self.toolDrawRect.rubberBand)
+        self.pan()
+    
+    # 地物提取
+    def segment(self, path):
+        from dialog.SegmentDialog import SegmentDialog
+        from qgis.PyQt.QtWidgets import QDialog
+        self.segmentDialog = SegmentDialog()
+        # 显示对话框
+        result = self.segmentDialog.exec_()  # 这会阻塞，直到对话框关闭
  
         if result == QDialog.Accepted:
             from algorithm.PredictThread import PredictThread
-            self.thread = PredictThread(self.ui, self.progress_bar, self.toolDrawRect)
+            self.thread = PredictThread(self.segmentDialog, self.progress_bar, self.toolDrawRect)
             self.thread.finished.connect(self.on_segment_finished)  # 连接信号到槽
             self.thread.start()    
         elif result == QDialog.Rejected:
             print("User clicked Close or pressed Escape")
-
+    # 地物提取后事件
     def on_segment_finished(self, result):
         print(result)  # 在主线程中处理结果
         self.addRaster(result)
 
+    # 聚类-分类后处理
+    def postClump(self):
+        from dialog.PostProcessDialog import PostProcessDialog
+        self.postprocessDialog = PostProcessDialog()
+        # 显示对话框
+        result = self.postprocessDialog.exec_()  # 这会阻塞，直到对话框关闭
+ 
+        if result == QDialog.Accepted:
+            from algorithm.PostClumpThread import PostClumpThread
+            self.thread = PostClumpThread(self.postprocessDialog, self.progress_bar, self.toolDrawRect)
+            self.thread.finished.connect(self.on_postclump_finished)  # 连接信号到槽
+            self.thread.start()
+        elif result == QDialog.Rejected:
+            print("User clicked Close or pressed Escape")
+    # 聚类后事件
+    def on_postclump_finished(self, result):
+        #print(result)  # 在主线程中处理结果
+        self.addRaster(result)
+
+    # 栅格转矢量
+    def rasterToVector(self):
+        from dialog.RasterToVectorDialog import RasterToVectorDialog
+        self.rasterToVectorDialog = RasterToVectorDialog()
+        # 显示对话框
+        result = self.rasterToVectorDialog.exec_()  # 这会阻塞，直到对话框关闭
+ 
+        if result == QDialog.Accepted:
+            from algorithm.RasterToVectorThread import RasterToVectorThread
+            self.thread = RasterToVectorThread(self.rasterToVectorDialog, self.progress_bar)
+            self.thread.finished.connect(self.on_rasterToVector_finished)  # 连接信号到槽
+            self.thread.start()
+        elif result == QDialog.Rejected:
+            print("User clicked Close or pressed Escape")
+    # 栅格转矢量后事件
+    def on_rasterToVector_finished(self, result):
+        print(result)  # 在主线程中处理结果
+        self.addVector(result)
+
+   # 数据集划分-成训练集和验证集
+    def splitDataSet(self):
+        from dialog.SplitDatasetDialog import SplitDatasetDialog
+        # 创建一个对话框实例，这里我们假设对话框是基于 QDialog 的
+        self.splitDataSetDialog = SplitDatasetDialog()
+        # 显示对话框
+        result = self.splitDataSetDialog.exec_()
+
+        if result == QDialog.Accepted:
+            from torch.utils.data import random_split
+            from algorithm.tool.dataset_split import BasicDataset
+            import torch
+            from tqdm import tqdm
+            from os.path import dirname
+            from os import mkdir
+            from os.path import exists
+            import time
+            import shutil 
+            from osgeo import ogr
+            time_start=time.time() 
+            trainsetNums = int(self.ui_splitDataset.lineEdit_trainset.text())
+            valsetNums = int(self.ui_splitDataset.lineEdit_valset.text())
+            testsetNums = int(self.ui_splitDataset.lineEdit_testset.text())          
+            column_index = 4  # 假设复选框项在第三列（索引为4）
+            for row_index in range(self.ui_splitDataset.model.rowCount()):                  
+                check_state = self.ui_splitDataset.model.item(row_index, column_index).checkState()
+                samplepath = self.ui_splitDataset.sampleList[row_index]
+                if check_state == Qt.Checked:
+                    samplerange_file = samplepath + 'SamplesRange.shp'                
+                    split_path = dirname(dirname(samplepath)) + '/split/'
+                    #print(split_path)
+                    train_file = split_path + '/train_set.txt'
+                    val_file = split_path + '/val_set.txt'
+                    test_file = split_path + '/test_set.txt'
+                    #make dir
+                    if (exists(split_path)!=True):
+                        mkdir(split_path)
+                    else:
+                        shutil.rmtree(split_path)
+                        mkdir(split_path)
+                    #processing
+                    image_path =  samplepath + 'image/'
+                    label_path = samplepath + 'label/'    
+                    dataset = BasicDataset(image_path, label_path)
+                    if len(dataset) != (trainsetNums+valsetNums+testsetNums):
+                       show_info_message(self, "错误", f"数据集划分参数错误！\n现有数据集数量（{len(dataset)}）不等于查询到的数据集数量（{(trainsetNums+valsetNums+testsetNums)}）。") 
+                    train_set, val_set, test_set = random_split(dataset, [trainsetNums, valsetNums, testsetNums], generator=torch.Generator().manual_seed(0))   
+
+                    f = open(train_file,'w',buffering=1)
+                    f.write(str(trainsetNums)+'\n') 
+                    strTrainSet = ""
+                    for image,label in tqdm(train_set):
+                        strTrainSet += image + '\n'
+                    f.write(strTrainSet)
+                    f.close()
+                    f = open(val_file,'w',buffering=1)
+                    f.write(str(valsetNums)+'\n')
+                    strValSet = ""
+                    for image,label in tqdm(val_set):
+                        strValSet += image + '\n'
+                    f.write(strValSet)
+                    f.close()
+                    f = open(test_file,'w',buffering=1)
+                    f.write(str(testsetNums)+'\n') 
+                    strTestSet = ""
+                    for image,label in tqdm(test_set):
+                        strTestSet += image + '\n'
+                    f.write(strTestSet)
+                    f.close()
+                    #print(strValSet)
+
+                    driver = ogr.GetDriverByName("ESRI Shapefile")
+                    data_source:ogr.DataSource = driver.Open(samplerange_file, 1)  # 1表示更新模式
+                    if data_source is None:
+                        print("无法打开文件")
+                    else:
+                        layer = data_source.GetLayer()
+                    for feature in layer:
+                        name_value = feature.GetField("Name")
+                        if str(strValSet).find(str(name_value))!=-1:
+                            #print(name_value)
+                            # 设置bz字段的值，这里假设设为"新属性值"，你可按需替换
+                            feature.SetField("Bz", "val")
+                        elif str(strTestSet).find(str(name_value))!=-1:
+                            feature.SetField("Bz", "test")
+                        else:
+                            feature.SetField("Bz", "train")
+                        layer.SetFeature(feature)
+                    data_source.Release()
+            time_end=time.time()
+            print('time cost','%.2f'%((time_end-time_start)/60.0),'minutes') 
+            show_info_message(self, "信息", "数据集划分完成!")   
+        elif result == QDialog.Rejected:
+            print("User clicked Close or pressed Escape")
+    
+    # 关于
+    def about(self):
+        import json
+        from cryptography.fernet import Fernet
+        from DeeplearningSystem import key_path,lic_path
+        # 从文件加载密钥
+        with open(key_path, 'rb') as key_file:
+            key = key_file.read()           
+        # 创建Fernet对象
+        fernet = Fernet(key)
+        with open(lic_path, "rb") as f:
+            encrypted_license = f.read()         
+        license_json = fernet.decrypt(encrypted_license).decode()
+        license_data = json.loads(license_json)
+        software_version = license_data.get("software_version")
+        user_id = license_data.get("user_id")
+        expiration_date = license_data.get("expiration_date")
+        show_info_message(self, 
+                            f'软件信息：基于深度学习的遥感影像信息提取系统\n构建日期：2024-12-31\n版权所有：河南省地球物理空间信息研究院有限公司\n技术邮箱：malianwei2009@163.com\n许可截至：{expiration_date}')
+    
+    
+    #############
+    # 其它集成函数  
+    #############
+    
+    # 加载栅格数据
     def addRaster(self, path):
         layer = QgsRasterLayer(path,basename(path))
         if not layer.isValid():
-            QMessageBox.information(self, '提示', '文件打开失败', QMessageBox.Ok)
+            show_info_message(self, '提示', '文件打开失败', QMessageBox.Ok)
             return
         if self.firstAddLayer:
             self.canvas.setDestinationCrs(layer.crs())
@@ -992,10 +1042,11 @@ class mainWindow(QMainWindow):
         self.canvas.refresh()
         self.firstAddLayer = False
     
+    # 加载矢量数据
     def addVector(self, path):
         layer = QgsVectorLayer(path,basename(path))
         if not layer.isValid():
-            QMessageBox.information(self, '提示', '文件打开失败', QMessageBox.Ok)
+            show_info_message(self, '提示', '文件打开失败')
             return   
 
         # 构造一个嵌入的渲染器
@@ -1024,6 +1075,7 @@ class mainWindow(QMainWindow):
         self.canvas.refresh()
         self.firstAddLayer = False
 
+    # 加载qgis工程
     def addProject(self, path):
         # 获取 QgsProject 的实例
         project = QgsProject.instance()             
@@ -1037,6 +1089,112 @@ class mainWindow(QMainWindow):
         self.setWindowTitle(f"{basename(path)} - 基于深度学习的遥感影像提取系统") 
         QgsLayerTreeMapCanvasBridge(project.layerTreeRoot(), self.canvas)        
 
+   
+    #########
+    # 其它事件  
+    #########
+    
+    # 设置工具栏按钮图标
+    def setIcons(self):
+        # 获取当前脚本所在的目录
+        from DeeplearningSystem import base_dir   
+        # 设置图标
+        icon_mainWindow = QIcon()
+        icon_mainWindow_path = join(base_dir, 'settings/icon', 'mainWindow.png')
+        icon_mainWindow.addPixmap(QPixmap(icon_mainWindow_path), QIcon.Normal, QIcon.Off)
+        self.setWindowIcon(icon_mainWindow)
+
+        icon_newProject = join(base_dir, 'settings/icon', 'SystemProject_NewProject.png')# 替换为你的图标文件路径
+        self.actionNewProject.setIcon(QIcon(icon_newProject))
+
+        icon_openProject = join(base_dir, 'settings/icon', 'SystemProject_OpenProject.png')
+        self.actionOpenProject.setIcon(QIcon(icon_openProject))
+
+        icon_saveProject = join(base_dir, 'settings/icon', 'SystemProject_SaveProject.png')
+        self.actionSaveProject.setIcon(QIcon(icon_saveProject))
+
+        icon_openImage = join(base_dir, 'settings/icon', 'DataLoader_Raster.png')
+        self.actionOpenRas.setIcon(QIcon(icon_openImage))
+
+        icon_openVector = join(base_dir, 'settings/icon', 'DataLoader_Vector.png')
+        self.actionOpenVec.setIcon(QIcon(icon_openVector))
+
+        icon_zoomIn = join(base_dir, 'settings/icon', 'MapBrowser_ZoomIn.png') 
+        self.actionZoomIn.setIcon(QIcon(icon_zoomIn))
+
+        icon_zoomOut = join(base_dir, 'settings/icon', 'MapBrowser_ZoomOut.png')
+        self.actionZoomOut.setIcon(QIcon(icon_zoomOut))
+
+        icon_Pan = join(base_dir, 'settings/icon', 'MapBrowser_Pan.png')
+        self.actionPan.setIcon(QIcon(icon_Pan))
+
+        icon_FullExten = join(base_dir, 'settings/icon', 'MapBrowser_FullExtent.png')
+        self.actionFullExtent.setIcon(QIcon(icon_FullExten))
+
+        icon_EditSample = join(base_dir, 'settings/icon', 'VectorEditor_Edit.png')
+        self.actionEditSample.setIcon(QIcon(icon_EditSample))
+
+        icon_DrawPolygon = join(base_dir, 'settings/icon', 'VectorEditor_DrawPolygonFeature.png')
+        self.actionDrawPolygon.setIcon(QIcon(icon_DrawPolygon))
+
+        icon_SelectSample = join(base_dir, 'settings/icon', 'VectorEditor_SelectFeature.png')
+        self.actionSelectSample.setIcon(QIcon(icon_SelectSample))
+
+        icon_DeleteSample = join(base_dir, 'settings/icon', 'VectorEditor_AddFeature.png')
+        self.actionDeleteSample.setIcon(QIcon(icon_DeleteSample))
+
+        icon_MakeSample = join(base_dir, 'settings/icon', 'MakeSample.png')
+        self.actionMakeSample.setIcon(QIcon(icon_MakeSample))
+
+        icon_EvaleSample = join(base_dir, 'settings/icon', 'Sample_Evalue.png')
+        self.actionEvalSample.setIcon(QIcon(icon_EvaleSample))
+
+        icon_ImportSample = join(base_dir, 'settings/icon', 'label_import.png')
+        self.actionImportSample.setIcon(QIcon(icon_ImportSample))
+
+        icon_DeleteSamples = join(base_dir, 'settings/icon', 'label_delete.png')
+        self.actionDeleteSamples.setIcon(QIcon(icon_DeleteSamples))
+
+        icon_QuerySample = join(base_dir, 'settings/icon', 'Query.png')
+        self.actionQuerySample.setIcon(QIcon(icon_QuerySample))
+
+        icon_CloseSamples = join(base_dir, 'settings/icon', 'label_close.png')
+        self.actionCloseSamples.setIcon(QIcon(icon_CloseSamples))
+
+        icon_StartTrain = join(base_dir, 'settings/icon', 'Train_Start.png')
+        self.actionModelTrain.setIcon(QIcon(icon_StartTrain))
+
+        icon_StopTrain = join(base_dir, 'settings/icon', 'Train_Stop.png')
+        self.actionStopTrain.setIcon(QIcon(icon_StopTrain))
+
+        icon_WatchTrain = join(base_dir, 'settings/icon', 'Train_Watch.png')
+        self.actionWatchTrain.setIcon(QIcon(icon_WatchTrain))
+        
+        icon_SeclectFeature = join(base_dir, 'settings/icon', 'MarkTool_SelectElement.png')
+        self.actionSelectFeature.setIcon(QIcon(icon_SeclectFeature))
+
+        icon_DrawRect = join(base_dir, 'settings/icon', 'MarkTool_DrawRectElement.png')
+        self.actionDrawRect.setIcon(QIcon(icon_DrawRect))       
+        
+        icon_ClearDraw = join(base_dir, 'settings/icon', 'MainCategory_DeleteAllSelect.png')  
+        self.actionClearDraw.setIcon(QIcon(icon_ClearDraw))       
+
+        icon_Segment = join(base_dir, 'settings/icon', 'Segment.png') 
+        self.actionSegment.setIcon(QIcon(icon_Segment))
+
+        icon_PostClump = join(base_dir, 'settings/icon', 'ImgClass_Post_Clump.png') 
+        self.actionPostClump.setIcon(QIcon(icon_PostClump))
+        
+        icon_RasterToVector = join(base_dir, 'settings/icon', 'Utility_RasterToVector.png')
+        self.actionRasterToVector.setIcon(QIcon(icon_RasterToVector))
+
+        icon_SplitDataset = join(base_dir, 'settings/icon', 'SplitDataset.png')
+        self.actionSplitDataSet.setIcon(QIcon(icon_SplitDataset))
+
+        icon_About = join(base_dir, 'settings/icon', 'MainCategory_About.png')
+        self.actionAbout.setIcon(QIcon(icon_About))
+    
+    # 显示地图坐标（在状态栏显示）
     def showXY(self,point):
         if bool(QgsProject.instance().mapLayers()):
             x = point.x()
@@ -1044,7 +1202,13 @@ class mainWindow(QMainWindow):
             self.coordinate_label.setText(f'坐标：{x:.6f}, {y:.6f}')
         else:
             self.coordinate_label.setText('坐标：无数据')
-
+    
+    # 显示地图坐标系（在状态栏显示）
+    def showCrs(self):
+        mapSetting : QgsMapSettings = self.canvas.mapSettings()
+        self.crs_label.setText(f"坐标系: {mapSetting.destinationCrs().description()}")
+                       
+    # 文件拖拽事件(支持文件拖拽到软件中)
     def dragEnterEvent(self, fileData):
         if fileData.mimeData().hasUrls():
             fileData.accept()
@@ -1066,10 +1230,5 @@ class mainWindow(QMainWindow):
             elif filePath == "":
                 pass
             else:
-                QMessageBox.about(self, '警告', f'{filePath}为不支持的文件类型，目前支持栅格影像和shp矢量')
+                show_info_message(self, '警告', f'{filePath}为不支持的文件类型，目前支持栅格影像和shp矢量')
 
-    def showCrs(self):
-        mapSetting : QgsMapSettings = self.canvas.mapSettings()
-        self.crs_label.setText(f"坐标系: {mapSetting.destinationCrs().description()}")
-            
-            

@@ -1,10 +1,10 @@
 
-from qgis.PyQt.QtCore import Qt,QRectF, QPointF,QPoint
-from qgis.PyQt.QtGui import QCursor,QPixmap,QPen, QColor
-from qgis.PyQt.QtWidgets import QMessageBox,QUndoStack,QComboBox,QMenu,QAction
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor
 from qgis.core import QgsRectangle,QgsPointXY, QgsWkbTypes,QgsVectorLayer, QgsVectorDataProvider,QgsFeature,QgsGeometry, QgsWkbTypes
 from qgis.gui import QgsMapToolEmitPoint, QgsRubberBand
 from dialog.FeatureAttributeDialog import FeatureAttributeDialog
+from tools.CommonTool import show_info_message
 
 
 class PolygonMapTool(QgsMapToolEmitPoint):
@@ -52,14 +52,14 @@ class PolygonMapTool(QgsMapToolEmitPoint):
                 self.p = self.polygon()
 
                 if self.recExtent and not QgsGeometry.fromRect(self.recExtent).contains(self.p):
-                    QMessageBox.about(self.mainWindow, '错误', "面矢量与图层范围不相交")
+                    show_info_message(self.mainWindow, '错误', "面矢量与图层范围不相交")
                     self.reset()
                 else:
                     if self.p is not None:
                         if self.p.isGeosValid():
                             self.addFeature()
                         else:
-                            QMessageBox.about(self.mainWindow, '错误', "面矢量拓扑逻辑错误")
+                            show_info_message(self.mainWindow, '错误', "面矢量拓扑逻辑错误")
                             self.reset()
                     else:
                         self.reset()

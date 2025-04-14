@@ -54,7 +54,11 @@ class BasicDataset(Dataset):
         id = basename(img_file)      
         mask_file = dirname(dirname(img_file)) + '/label/' + id  
         img = Image.open(img_file)
-        mask = Image.open(mask_file)  
+        mask = Image.open(mask_file)
+        if img.width > 256:
+            crop_params = tfs.RandomCrop.get_params(img, (256, 256))
+            img = F.crop(img, *crop_params)
+            mask = F.crop(mask, *crop_params)
         img, mask = rand_crop(img, mask)
         img, mask = color_jitter(img, mask)
         #img, mask = gray_scale(img, mask)
@@ -80,6 +84,10 @@ class ValDataset(Dataset):
         mask_file = dirname(dirname(img_file)) + '/label/' + id  
         img = Image.open(img_file)
         mask = Image.open(mask_file)  
+        if img.width > 256:
+            crop_params = tfs.RandomCrop.get_params(img, (256, 256))
+            img = F.crop(img, *crop_params)
+            mask = F.crop(mask, *crop_params)
         img = np.array(img).transpose((2, 0, 1)) / 255
         mask = np.expand_dims(mask, axis=0)
         return img, mask

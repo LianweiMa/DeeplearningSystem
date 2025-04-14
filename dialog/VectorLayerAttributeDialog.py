@@ -1,8 +1,13 @@
 
-from qgis.PyQt import QtCore, QtGui, QtWidgets
-from qgis.PyQt.QtWidgets import QDialog, QHBoxLayout,QDockWidget,QVBoxLayout,QDesktopWidget,QMessageBox
+# -*- coding: utf-8 -*-
+
+from PyQt5.QtWidgets import QDialog, QHBoxLayout, QDesktopWidget
 from qgis.core import QgsVectorLayerCache,QgsVectorLayer
 from qgis.gui import QgsAttributeTableView, QgsAttributeTableModel, QgsAttributeTableFilterModel,QgsGui
+from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtCore import Qt
+from tools.CommonTool import show_info_message
+
 
 class VectorLayerAttributeDialog(QDialog):
     def __init__(self, mainWindows, layer):
@@ -12,7 +17,7 @@ class VectorLayerAttributeDialog(QDialog):
         self.mapCanvas = self.mainWindows.canvas
         self.layer : QgsVectorLayer = layer
         self.setObjectName("attrWidget"+self.layer.id())
-        self.setWindowTitle("属性表:"+self.layer.name())
+        self.setWindowTitle("属性表 - "+self.layer.name())
         vl = QHBoxLayout(self)
         self.tableView = QgsAttributeTableView(self)   
         self.tableView.doubleClicked.connect(self.on_double_click)# 连接双击信号到槽函数
@@ -22,7 +27,14 @@ class VectorLayerAttributeDialog(QDialog):
         self.openAttributeDialog()
         QgsGui.editorWidgetRegistry().initEditors(self.mapCanvas)
 
-        self.setWindowFlags(self.windowFlags() & ~(QtCore.Qt.WindowContextHelpButtonHint)) # 隐藏对话框标题栏默认的问号按钮
+        # 在这里添加你的逻辑代码
+        from os.path import join
+        from DeeplearningSystem import base_dir
+        png = join(base_dir, 'settings/icon', 'VectorEditor_BatchAttributeEdit.png') 
+        icon = QIcon()
+        icon.addPixmap(QPixmap(png), QIcon.Normal, QIcon.Off)
+        self.setWindowIcon(icon)
+        self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))
 
     def center(self):
         # 获取屏幕的尺寸信息
@@ -51,4 +63,4 @@ class VectorLayerAttributeDialog(QDialog):
         #layer = self.tableView.layer()
         #feature = layer.getFeature(row)
         if not self.layer.isEditable():
-            QMessageBox.information(self.tableView, "信息", "如要编辑属性，请打开图层编辑状态！", QMessageBox.Ok)
+            show_info_message(self.tableView, "信息", "如要编辑属性，请打开图层编辑状态！")

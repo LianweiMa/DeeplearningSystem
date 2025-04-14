@@ -27,6 +27,7 @@ class MakeSampleThread(QThread):
         label_file = self.ui.lineEdit_label.text()
         boundaryfile = self.ui.lineEdit_boundary.text()
         samplePath = self.ui.lineEdit_saveSamplePath.text()
+        sampleClass = self.ui.comboBox_sampleClass.currentText()
 
         dataset = gdal.Open(image_file)
         if dataset is None:
@@ -97,7 +98,7 @@ class MakeSampleThread(QThread):
             # 清理资源
             out_feature = None
             out_ds = None
-            print("要素提取完成！")
+            #print("要素提取完成！")
 
             rasterclip_file = f'{samplePath}/image/{feature_name }.tif'
             # 打开矢量数据
@@ -121,7 +122,7 @@ class MakeSampleThread(QThread):
             # 清理资源
             vector_ds = None
 
-            print("栅格影像裁剪完成！")
+            #print("栅格影像裁剪完成！")
 
             intersect_file = f'{samplePath}/vector/{feature_name }.shp'
             import geopandas as gpd
@@ -139,7 +140,7 @@ class MakeSampleThread(QThread):
             # 保存结果
             intersection.to_file(intersect_file)
 
-            print("相交操作完成！")
+            #print("相交操作完成！")
 
             union_file = f'{samplePath}/vector/{feature_name }_union.shp'
 
@@ -156,7 +157,7 @@ class MakeSampleThread(QThread):
             # 保存并集结果
             union_gdf.to_file(union_file)
 
-            print("并集操作完成！")
+            #print("并集操作完成！")
 
 
             # 输出栅格文件路径
@@ -206,11 +207,12 @@ class MakeSampleThread(QThread):
             raster_ds = None
             vector_ds = None
 
-            print("矢量转栅格完成！")
+            #print("矢量转栅格完成！")
 
         # 关闭输入文件
         data_source = None
 
-        print(f"处理完成！")
+        #print(f"处理完成！")
         time_end = time.time()
-        self.progress_bar.setText(f"处理完成: 花费时间 {((time_end-time_start)/60.0):.2f} 分钟")               
+        self.progress_bar.setText(f"处理完成: 花费时间 {((time_end-time_start)/60.0):.2f} 分钟") 
+        return sampleClass,samplePath              

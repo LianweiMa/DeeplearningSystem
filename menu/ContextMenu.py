@@ -2,6 +2,7 @@ from qgis.PyQt.QtWidgets import QMenu, QAction,QMessageBox
 from qgis.core import QgsLayerTreeNode, QgsLayerTree, QgsMapLayerType, QgsProject, QgsLayerTreeGroup,QgsMapLayer
 from qgis.gui import QgsLayerTreeViewMenuProvider, QgsLayerTreeView, QgsLayerTreeViewDefaultActions, QgsMapCanvas
 from dialog.VectorLayerAttributeDialog import VectorLayerAttributeDialog
+from tools.CommonTool import show_info_message, show_question_message
 
 class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
     def __init__(self, mainWindow, layerTreeView: QgsLayerTreeView, mapCanvas: QgsMapCanvas, *args, **kwargs):
@@ -76,8 +77,7 @@ class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
             self.mainWindow.ad.show()
 
     def deleteSelectedLayer(self):
-        deleteRes = QMessageBox.question(self.mainWindow, '信息', "确定要删除所选图层？", QMessageBox.Yes | QMessageBox.No,
-                                        QMessageBox.No)
+        deleteRes = show_question_message(self.mainWindow, '信息', "确定要删除所选图层？")
         if deleteRes == QMessageBox.Yes:
             layers = self.layerTreeView.selectedLayers()
             for layer in layers:
@@ -90,18 +90,16 @@ class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
     
     def deleteAllLayer(self):
         if len(QgsProject.instance().mapLayers().values()) == 0:
-            QMessageBox.about(self.mainWindow, '信息', '您的图层为空')
+            show_info_message(self.mainWindow, '信息', '您的图层为空')
         else:
-            deleteRes = QMessageBox.question(self.mainWindow, '信息', "确定要删除所有图层？", QMessageBox.Yes | QMessageBox.No,
-                                               QMessageBox.No)
+            deleteRes = show_question_message(self.mainWindow, '信息', "确定要删除所有图层？")
             if deleteRes == QMessageBox.Yes:
                 for layer in QgsProject.instance().mapLayers().values():
                         self.deleteLayer(layer)
                 self.mainWindow.firstAddLayer = True
     
     def deleteGroup(self,group:QgsLayerTreeGroup):
-        deleteRes = QMessageBox.question(self.mainWindow, '信息', "确定要删除选中组？", QMessageBox.Yes | QMessageBox.No,
-                                         QMessageBox.No)
+        deleteRes = show_info_message(self.mainWindow, '信息', "确定要删除选中组？")
         if deleteRes == QMessageBox.Yes:
             layerTreeLayers  = group.findLayers()
             for layer in layerTreeLayers:

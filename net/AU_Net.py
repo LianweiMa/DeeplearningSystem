@@ -131,6 +131,8 @@ class Attention_block(nn.Module):
         
         g1 = self.W_g(g)
         x1 = self.W_x(x)
+        #print("g1 shape:", g1.shape)  # 例如 torch.Size([batch, channel, height, 186])
+        #print("x1 shape:", x1.shape)  # 例如 torch.Size([batch, channel, height, 187])
         psi = self.relu(g1+x1)
         psi = self.psi(psi)
 

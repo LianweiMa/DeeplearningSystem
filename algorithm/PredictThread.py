@@ -33,7 +33,7 @@ class PredictThread(QThread):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if (self.ui.comboBox_modelNet.currentText() == 'AUNet'):
             from net.AU_Net import AttU_Net
-            if(self.ui.comboBox_modelType.currentText() == 'bareland'):
+            if(self.ui.comboBox_modelNet.currentText() == 'bareland'):
                 net = AttU_Net(4, 2)
             else:
                 net = AttU_Net(3, 2)
@@ -162,7 +162,7 @@ class PredictThread(QThread):
                                 ymax -= padding*geotransform[5]
                             if endY == startY_r + height_r-1:
                                 imgdata = np.pad(imgdata,((0,0),(0,intervalY-(endY-startY+1)),(0,0)),'edge')
-                        if(self.ui.comboBox_modelType.currentText() == 'bareland'):
+                        if(self.ui.comboBox_modelNet.currentText() == 'bareland'):
                             imgdata = imgdata/10000   
                         else:
                              imgdata = imgdata/255                 
