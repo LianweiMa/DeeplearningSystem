@@ -11,9 +11,8 @@
 from qgis.core import QgsProject, QgsLayerTreeModel, QgsRasterLayer, QgsVectorLayer, QgsMapLayer, QgsCoordinateReferenceSystem, QgsMapLayerType, QgsMapSettings
 from qgis.gui import QgsMapCanvas, QgsLayerTreeView, QgsLayerTreeMapCanvasBridge, QgsMapToolPan, QgsMapToolZoom, QgsMapToolIdentifyFeature
 from qgis.PyQt.QtWidgets import QAction, QMainWindow, QToolBar, QLabel, QHBoxLayout, QWidget, QFileDialog, QMessageBox, QDialog, QDockWidget
-from qgis.PyQt.QtGui import QIcon, QPixmap
+from qgis.PyQt.QtGui import QIcon, QPixmap, QStandardItemModel, QStandardItem
 from qgis.PyQt.QtCore import Qt, QMimeData
-from qgis.PyQt.QtGui import QStandardItemModel, QStandardItem
 from qgis.PyQt import QtWidgets,QtCore
 from os.path import basename,join
 from tools.CommonTool import show_info_message, show_question_message
@@ -46,8 +45,6 @@ class mainWindow(QMainWindow):
         self.tocView.setModel(self.model)
         #self.tocView.setFixedWidth(300)
         self.bridge = QgsLayerTreeMapCanvasBridge(self.root, self.canvas, self)
-        #self.tocView.setFixedWidth(300)
-        self.bridge = QgsLayerTreeMapCanvasBridge(self.root, self.canvas, self)
         # 图层管理器中添加右键菜单
         from menu.ContextMenu import CustomMenuProvider
         self.customMenuProvider = CustomMenuProvider(self, self.tocView, self.canvas)
@@ -59,20 +56,14 @@ class mainWindow(QMainWindow):
         self.tableView_sampleList.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.tableView_sampleList.setObjectName("tableView_sampleList")
         self.tableView_sampleList.horizontalHeader().setCascadingSectionResizes(False)
-        #self.tableView_sampleList.setFixedWidth(600)
-        #self.tableView_sampleList.setFixedWidth(600)
         # 创建模型并设置数据
-        self.sampleModel = QStandardItemModel()
-        self.sampleModel.setHorizontalHeaderLabels(["名称", "类别", "误差", "查准", "查全", "IOU", "路径", "编辑"])  # 设置列头标签
         self.sampleModel = QStandardItemModel()
         self.sampleModel.setHorizontalHeaderLabels(["名称", "类别", "误差", "查准", "查全", "IOU", "路径", "编辑"])  # 设置列头标签
         # 创建表格视图
         self.tableView_sampleList.setModel(self.sampleModel)
-        self.tableView_sampleList.setModel(self.sampleModel)
         self.tableView_sampleList.resizeColumnsToContents()
         # 设置 QTableView 的列头可排序
         self.tableView_sampleList.horizontalHeader().setSectionsClickable(True)
-        self.tableView_sampleList.horizontalHeader().setSortIndicatorShown(True)
         # 事件绑定
         self.tableView_sampleList.doubleClicked.connect(self.on_tableView_double_clicked)
 
@@ -101,6 +92,7 @@ class mainWindow(QMainWindow):
         self.actionZoomOut = QAction("缩小工具", self)
         self.actionPan = QAction("平移工具", self)
         self.actionFullExtent = QAction("全图工具", self)  
+        self.actionSwipe = QAction("卷帘工具", self)  
         self.actionLayerView = QAction("图层面板", self) 
         self.actionSamplesView = QAction("样本库面板", self) 
         self.actionLayerView = QAction("图层面板", self) 
@@ -136,8 +128,7 @@ class mainWindow(QMainWindow):
         self.actionEditSample.setEnabled(False)
         self.actionSelectSample.setCheckable(True)
         self.actionCloseSamples.setEnabled(False)
-        
-        
+                
 
         # 绑定事件
         self.actionNewProject.triggered.connect(self.newProject)
@@ -149,6 +140,7 @@ class mainWindow(QMainWindow):
         self.actionZoomOut.triggered.connect(self.zoomOut)
         self.actionPan.triggered.connect(self.pan)
         self.actionFullExtent.triggered.connect(self.fullExtent)
+        self.actionSwipe.triggered.connect(self.swipe)
         self.actionLayerView.toggled.connect(self.showLayerView)
         self.actionSamplesView.toggled.connect(self.showSamplesView)
         self.actionLayerView.toggled.connect(self.showLayerView)
@@ -182,6 +174,9 @@ class mainWindow(QMainWindow):
         self.toolZoomIn.setAction(self.actionZoomIn)
         self.toolZoomOut = QgsMapToolZoom(self.canvas, True)  # true = out
         self.toolZoomOut.setAction(self.actionZoomOut)
+        #from tools.SwipeTool import MapSwipeTool
+        #self.toolSwipe = MapSwipeTool(self.canvas)
+        #self.toolSwipe.setAction(self.actionSwipe)
 
         # 菜单栏
         menuBar = self.menuBar()# QMainWindow自带空的菜单栏、工具栏、状态栏
@@ -202,6 +197,7 @@ class mainWindow(QMainWindow):
         viewMenu.addAction(self.actionZoomOut)
         viewMenu.addAction(self.actionPan)
         viewMenu.addAction(self.actionFullExtent)
+        viewMenu.addAction(self.actionSwipe)
         viewMenu.addSeparator()   
         viewMenu.addAction(self.actionLayerView)
         viewMenu.addAction(self.actionSamplesView)
@@ -248,6 +244,7 @@ class mainWindow(QMainWindow):
         toolBar.addAction(self.actionZoomOut)
         toolBar.addAction(self.actionPan)
         toolBar.addAction(self.actionFullExtent)
+        toolBar.addAction(self.actionSwipe)
         toolBar.addSeparator() 
         toolBar.addAction(self.actionEditSample)
         toolBar.addAction(self.actionDrawPolygon)
@@ -388,8 +385,8 @@ class mainWindow(QMainWindow):
         self.tableView_dock.setMinimumWidth(300)
         
 
-        self.pan()# 设置默认功能          
-
+        self.pan()# 设置默认功能    
+             
     # 新建工程
     def newProject(self):
         # 创建一个新的项目
@@ -464,6 +461,14 @@ class mainWindow(QMainWindow):
     # 视图全图
     def fullExtent(self):
         self.canvas.zoomToFullExtent()
+
+    # 视图卷帘
+    def swipe(self):
+        #self.canvas.setMapTool(self.toolSwipe)
+        #from tools.SwipeTool import init_swipe_tool
+        #swipe_integration = init_swipe_tool(self) 
+        from tools.SwipeTool import SwipeToolController
+        swipe_controller = SwipeToolController(self)
 
     # 图层面板显示
     def showLayerView(self,checked):
@@ -1074,7 +1079,7 @@ class mainWindow(QMainWindow):
         software_version = license_data.get("software_version")
         user_id = license_data.get("user_id")
         expiration_date = license_data.get("expiration_date")
-        show_info_message(self, 
+        show_info_message(self, "提示"
                             f'软件信息：基于深度学习的遥感影像信息提取系统\n构建日期：2024-12-31\n版权所有：河南省地球物理空间信息研究院有限公司\n技术邮箱：malianwei2009@163.com\n许可截至：{expiration_date}')
     
     
@@ -1190,9 +1195,8 @@ class mainWindow(QMainWindow):
         icon_FullExten = join(base_dir, 'settings/icon', 'MapBrowser_FullExtent.png')
         self.actionFullExtent.setIcon(QIcon(icon_FullExten))
 
-        #icon_ShowView = join(base_dir, 'settings/icon', 'check.png')
-        #self.actionLayerView.setIcon(QIcon(icon_ShowView))
-        #self.actionSamplesView.setIcon(QIcon(icon_ShowView))
+        icon_Swipe = join(base_dir, 'settings/icon', 'MapBrowser_SwipeLayer.png')
+        self.actionSwipe.setIcon(QIcon(icon_Swipe))
 
         icon_EditSample = join(base_dir, 'settings/icon', 'VectorEditor_Edit.png')
         self.actionEditSample.setIcon(QIcon(icon_EditSample))
