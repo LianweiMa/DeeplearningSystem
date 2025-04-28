@@ -23,10 +23,10 @@ class QuerySamplesDialog(QDialog, Ui_Dialog):
         self.setWindowIcon(icon)
         self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))
 
-        self.comboBox_Type.activated.connect(self.on_comboBox_Type_activated)# 将 QComboBox 的 currentIndexChanged 信号连接到槽函数
-        self.comboBox_Class.activated.connect(self.on_comboBox_Class_activated)# 将 QComboBox 的 currentIndexChanged 信号连接到槽函数
-        self.comboBox_Size.activated.connect(self.on_comboBox_Size_activated)# 将 QComboBox 的 currentIndexChanged 信号连接到槽函数
-        self.comboBox_GSD.activated.connect(self.on_comboBox_GSD_activated)# 将 QComboBox 的 currentIndexChanged 信号连接到槽函数
+        self.comboBox_Type.activated.connect(self.comboBox_Type_activated)# 将 QComboBox 的 currentIndexChanged 信号连接到槽函数
+        self.comboBox_Class.activated.connect(self.comboBox_Class_activated)# 将 QComboBox 的 currentIndexChanged 信号连接到槽函数
+        self.comboBox_Size.activated.connect(self.comboBox_Size_activated)# 将 QComboBox 的 currentIndexChanged 信号连接到槽函数
+        self.comboBox_GSD.activated.connect(self.comboBox_GSD_activated)# 将 QComboBox 的 currentIndexChanged 信号连接到槽函数
 
         # 初始化     
         tree = etree.parse(sample_cofing_path)
@@ -36,7 +36,7 @@ class QuerySamplesDialog(QDialog, Ui_Dialog):
         self.comboBox_Class.setCurrentIndex(-1)
 
     # 定义槽函数，用于响应 QComboBox 的选择变化
-    def on_comboBox_Class_activated(self, index):
+    def comboBox_Class_activated(self, index):
         self.comboBox_Size.clear()
         self.comboBox_Type.clear()
         self.comboBox_GSD.clear()
@@ -53,7 +53,7 @@ class QuerySamplesDialog(QDialog, Ui_Dialog):
                 self.comboBox_Size.addItem(child.get('Size'))
         self.comboBox_Size.setCurrentIndex(-1)
 
-    def on_comboBox_Size_activated(self, index):
+    def comboBox_Size_activated(self, index):
         self.comboBox_Type.clear()
         self.comboBox_GSD.clear()
         self.comboBox_Name.clear()
@@ -70,7 +70,7 @@ class QuerySamplesDialog(QDialog, Ui_Dialog):
                 self.comboBox_Type.addItem(element.get('Type'))
         self.comboBox_Type.setCurrentIndex(-1)
 
-    def on_comboBox_Type_activated(self, index):
+    def comboBox_Type_activated(self, index):
         self.comboBox_GSD.clear()
         self.comboBox_Name.clear()
         self.comboBox_GSD.setEnabled(True)
@@ -86,7 +86,7 @@ class QuerySamplesDialog(QDialog, Ui_Dialog):
                 self.comboBox_GSD.addItem(element.get('GSD'))
         self.comboBox_GSD.setCurrentIndex(-1)
 
-    def on_comboBox_GSD_activated(self, index):
+    def comboBox_GSD_activated(self, index):
         self.comboBox_Name.clear()
         self.comboBox_Name.setEnabled(True)
         selected_text = self.comboBox_Class.currentText()  # 获取当前选中的文本

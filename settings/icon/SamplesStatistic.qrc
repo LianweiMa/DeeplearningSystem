@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="icon">
+    <file>MarkTool_MarkClear.png</file>
+    <file>VectorEditor_AttributeEdit.png</file>
+  </qresource>
+</RCC>

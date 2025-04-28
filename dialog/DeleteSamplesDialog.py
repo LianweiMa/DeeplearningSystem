@@ -24,8 +24,8 @@ class DeleteSamplesDialog(QDialog, Ui_Dialog):
         self.setWindowIcon(icon)
         self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))
 
-        self.comboBox_sampleClass.activated.connect(self.on_comboBox_sampleClass_activated)# 将 QComboBox 的 currentIndexChanged 信号连接到槽函数
-        self.pushButton_QuerySample.clicked.connect(self.on_querySample_clicked)
+        self.comboBox_sampleClass.activated.connect(self.comboBox_sampleClass_activated)# 将 QComboBox 的 currentIndexChanged 信号连接到槽函数
+        self.pushButton_QuerySample.clicked.connect(self.querySample_clicked)
 
         # 初始化
         tree = etree.parse(sample_cofing_path)
@@ -47,7 +47,7 @@ class DeleteSamplesDialog(QDialog, Ui_Dialog):
         self.tableView_sampleList.horizontalHeader().setSectionsClickable(True)
         self.tableView_sampleList.horizontalHeader().setSortIndicatorShown(True)
 
-    def on_querySample_clicked(self):
+    def querySample_clicked(self):
         from qgis.PyQt.QtGui import QStandardItem   
         
         sampleClass = self.comboBox_sampleClass.currentText()
@@ -102,6 +102,6 @@ class DeleteSamplesDialog(QDialog, Ui_Dialog):
        
         show_info_message(None, '提示', f"共选择{number_of_selected_rows}样本分库！")
 
-    def on_comboBox_sampleClass_activated(self,index):         
+    def comboBox_sampleClass_activated(self,index):         
         self.model.removeRows(0, self.model.rowCount())
         self.tableView_sampleList.resizeColumnsToContents()

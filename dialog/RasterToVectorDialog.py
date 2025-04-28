@@ -22,8 +22,8 @@ class RasterToVectorDialog(QDialog, Ui_Dialog):
         self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))
 
 
-        self.pushButton_openImage.clicked.connect(self.on_openImage_clicked)
-        self.pushButton_saveVector.clicked.connect(self.on_saveVector_clicked)
+        self.pushButton_openImage.clicked.connect(self.openImage_clicked)
+        self.pushButton_saveVector.clicked.connect(self.saveVector_clicked)
        
         #初始化
         self.comboBox_openImage.clear()
@@ -33,14 +33,14 @@ class RasterToVectorDialog(QDialog, Ui_Dialog):
                 filepath = layer.dataProvider().dataSourceUri()
                 self.comboBox_openImage.addItem(filepath)
 
-    def on_openImage_clicked(self,Dialog):
+    def openImage_clicked(self,Dialog):
         from qgis.PyQt.QtWidgets import QFileDialog
         path_to_tif,_ = QFileDialog.getOpenFileName(None, '打开', '', 'Raster Files (*.tif;*.tiff;*.img;*.dat);;All Files (*.*)')
         if  path_to_tif=="":
             return
         self.comboBox_openImage.setCurrentText(path_to_tif)
 
-    def on_saveVector_clicked(self,Dialog):
+    def saveVector_clicked(self,Dialog):
         from qgis.PyQt.QtWidgets import QFileDialog
         path_to_tif,_ = QFileDialog.getSaveFileName(None, '保存', '', 'Vector Files (*.shp);;All Files (*.*)')
         if  path_to_tif=="":

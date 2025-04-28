@@ -42,7 +42,7 @@ class PredictThread(QThread):
             net = DeepLabV3Plus(classes=2)
         net.to(device)
         net = nn.DataParallel(net)
-        net.load_state_dict(torch.load(self.ui.m_modelFile))   
+        net.load_state_dict(torch.load(self.ui.m_modelFile[self.ui.comboBox_modelList.currentIndex()]))   
         net.eval()
         #index color
         colorTable=gdal.ColorTable()

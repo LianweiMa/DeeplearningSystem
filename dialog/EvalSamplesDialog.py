@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QComboBox
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap
 from PyQt5.QtCore import Qt
 from lxml import etree
+from os.path import exists
 # XML文件的路径
 from DeeplearningSystem import sample_cofing_path, model_cofing_path
 from tools.CommonTool import show_info_message
@@ -24,18 +25,13 @@ class EvalSamplesDialog(QDialog, Ui_Dialog):
         self.setWindowIcon(icon)
         self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))
 
-        self.comboBox_sampleClass.currentIndexChanged.connect(self.on_comboBox_sampleClass_currentIndexChanged)# 将 QComboBox 的 currentIndexChanged 信号连接到槽函数
-        self.comboBox_sampleClass.activated.connect(self.on_comboBox_sampleClass_activated)
-        self.pushButton_QuerySample.clicked.connect(self.on_querySample_clicked)
-        self.pushButton_QueryModel.clicked.connect(self.on_queryModel_clicked)
-
-        self.comboBox_sampleClass.setCurrentIndex(-1)
+        
         self.checkBox.stateChanged.connect(self.onHeaderCheckBoxStateChanged) 
         # 创建模型并设置数据
         self.model = QStandardItemModel()
         self.model.setHorizontalHeaderLabels(["名称", "类别", "尺寸", "数量", "选择"])  # 设置列头标签
         # 连接 itemChanged 信号到槽函数
-        self.model.itemChanged.connect(self.on_item_changed)
+        self.model.itemChanged.connect(self.item_changed)
         self.selectSampleList = []
         # 创建表格视图
         self.tableView_sampleList.setModel(self.model)
@@ -44,29 +40,33 @@ class EvalSamplesDialog(QDialog, Ui_Dialog):
         self.tableView_sampleList.horizontalHeader().setSectionsClickable(True)
         self.tableView_sampleList.horizontalHeader().setSortIndicatorShown(True)
 
-        # 初始化    
+        # 初始化 
         tree = etree.parse(sample_cofing_path)
         root = tree.getroot()# Samples
         for child in root.iterchildren():
             self.comboBox_sampleClass.addItem(child.get('EnglishName'))           
         self.comboBox_sampleClass.setCurrentIndex(-1)
 
-    def on_comboBox_sampleClass_currentIndexChanged(self,index):
-        #self.comboBox_sampleClass.clear()
-        pass
+        self.comboBox_sampleClass.activated[str].connect(self.comboBox_sampleClass_activated)
+        self.pushButton_QuerySample.clicked.connect(self.querySample_clicked)
+        self.pushButton_QueryModel.clicked.connect(self.queryModel_clicked)
+        self.comboBox_sampleClass.currentIndexChanged.connect(lambda index: self.pushButton_QuerySample.setEnabled(index != -1))
 
-    def on_comboBox_sampleClass_activated(self,index):         
+    def comboBox_sampleClass_activated(self,index): 
         self.comboBox_modelNet.clear()  
         samplesClass = self.comboBox_sampleClass.currentText()
         # 加载现有 XML
         tree = etree.parse(model_cofing_path)
         # 查找特定ID的节点
-        node = tree.xpath(f'//ModelClass[@EnglishName="{samplesClass}"]')[0]
-        for child in node.iterchildren():
-            self.comboBox_modelNet.addItem(child.get('Name'))           
-        self.comboBox_modelNet.setCurrentIndex(-1)   
-    
-    def on_querySample_clicked(self):
+        node = tree.xpath(f'//ModelClass[@EnglishName="{samplesClass}"]')
+        if node:
+            for child in node[0].iterchildren():
+                self.comboBox_modelNet.addItem(child.get('Net'))           
+            self.comboBox_modelNet.setCurrentIndex(-1)      
+        else:                                     
+            show_info_message(self, '提示', f"未找到 EnglishName='{samplesClass}' 的 ModelClass 节点")        
+
+    def querySample_clicked(self):
         samplesClass = self.comboBox_sampleClass.currentText()
         self.sampleList = []        
         # 加载现有 XML
@@ -88,7 +88,7 @@ class EvalSamplesDialog(QDialog, Ui_Dialog):
         self.tableView_sampleList.resizeColumnsToContents() 
 
     # 捕获复选框状态变化的槽函数
-    def on_item_changed(self, item: QStandardItem):       
+    def item_changed(self, item: QStandardItem):       
         if item.isCheckable():  # 检查是否为复选框
             row = item.row()
             if item.checkState() == Qt.Checked:
@@ -126,22 +126,30 @@ class EvalSamplesDialog(QDialog, Ui_Dialog):
 
         show_info_message(None, '提示', f"共选择{number_of_selected_rows}样本分库！")
 
-    def on_queryModel_clicked(self):
+    def queryModel_clicked(self):
         #清空
         self.comboBox_modelList.clear()
-        self.comboBox_modelList.currentIndex = -1
+        self.m_modelFile = []
         sampleClass = self.comboBox_sampleClass.currentText()
         modelNet = self.comboBox_modelNet.currentText()
         # 加载现有 XML
         tree = etree.parse(model_cofing_path)
         # 查找特定ID的节点
         node = tree.xpath(f'//ModelClass[@EnglishName="{sampleClass}"]')[0]
-        node1 = node.xpath(f'//ModelType[@Name="{modelNet}"]')[0]
+        node1 = node.xpath(f'//ModelPath[@Net="{modelNet}"]')
         if node1 is not None:
-            from os.path import basename,exists
-            self.m_modelFile = node1.text
-            self.comboBox_modelList.addItem(basename(self.m_modelFile))
-            if not exists(self.m_modelFile):
-                show_info_message(self, '提示', f"查询不到模型文件，请检查其是否存在！\n{self.m_modelFile}")
+            for element in node1:           
+                self.m_modelFile.append(element.text)
+                paras = element.text.split('_')
+                self.comboBox_modelList.addItem(f"{element.get('Name')}({'_'.join(paras[3:]).rsplit('.',1)[0]})")
+                if not exists(element.text):
+                    show_info_message(self, '提示', f"查询不到模型文件，请检查其是否存在！\n{element.text}")         
+            self.comboBox_modelList.setCurrentIndex(-1)
+            # 计算最长文本的宽度，并设置下拉列表的最小宽度
+            self.comboBox_modelList.view().setMinimumWidth(
+                self.comboBox_modelList.fontMetrics().boundingRect(
+                    max((self.comboBox_modelList.itemText(i) for i in range(self.comboBox_modelList.count())), key=len)
+                ).width() + 20  # 加 20 像素的边距
+            )          
         else:                                     
             show_info_message(self, '提示', "查询不到模型，请选择其它模型！") 

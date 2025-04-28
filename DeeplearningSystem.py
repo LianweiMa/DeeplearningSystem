@@ -12,7 +12,8 @@ from qgis.core import QgsApplication
 from qgis.PyQt.QtCore import Qt,QTranslator
 import datetime,json
 from cryptography.fernet import Fernet
-from mainWin import mainWindow
+#from mainWin import mainWindow as mainWin
+from dialog.mainWin import mainWin
 from os.path import dirname,join
 from os import environ
 base_dir = dirname(__file__)      
@@ -42,7 +43,7 @@ if __name__ == "__main__":
     user_id = license_data.get("user_id")
     expiration_date = license_data.get("expiration_date")
 
-    #QgsApplication.setPrefixPath(r'D:\AI_Test', True)
+    QgsApplication.setPrefixPath('', True)
     QgsApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     app = QgsApplication([], False)
 
@@ -52,7 +53,7 @@ if __name__ == "__main__":
 
     app.initQgis()
 
-    myWindow = mainWindow()
+    myWindow = mainWin()
     
     # 在这里进行详细的验证，如检查版本、用户身份、期限和功能等
     if datetime.datetime.strptime(expiration_date, "%Y-%m-%d") < datetime.datetime.now():        
@@ -62,5 +63,8 @@ if __name__ == "__main__":
     else:   
         print('run')
         myWindow.show()
+        # 关键：激活窗口并获取焦点
+        myWindow.activateWindow()
+        #myWindow.raise_()
         app.exec_()
         app.exitQgis()
