@@ -20,16 +20,16 @@ class ImportSamplesDialog(QDialog, Ui_Dialog):
         self.setWindowIcon(icon)
         self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))
 
-        self.pushButton_Browser.clicked.connect(self.on_open_clicked)
-        self.lineEdit_SamplesPath.textChanged.connect(self.on_text_changed)
+        self.pushButton_Browser.clicked.connect(self.open_clicked)
+        self.lineEdit_SamplesPath.textChanged.connect(self.text_changed)
 
-    def on_open_clicked(self,Dialog):
+    def open_clicked(self,Dialog):
         from qgis.PyQt.QtWidgets import QFileDialog
         folder_selected = QFileDialog.getExistingDirectory(None, "Select Folder to Open")
         if  folder_selected:
             self.lineEdit_SamplesPath.setText(folder_selected)
 
-    def on_text_changed(self,text):
+    def text_changed(self,text):
         samplePath = self.lineEdit_SamplesPath.text()#E:\DeepLearning\Samples\Building\256x256\Sat\Meter\negative_411702_202001_yicheng_city\crop
         result = samplePath.rsplit('/', 6)
         self.lineEdit_Class.setText(result[1].lower())

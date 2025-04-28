@@ -20,8 +20,8 @@ class TrainDialog(QDialog, Ui_Dialog):
         self.setWindowIcon(icon)
         self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))
         self.comboBox_modelNet.addItems([ "AUNet", "UNet", "DeepLabV3Plus" ])
-        self.pushButton_QuerySample.clicked.connect(self.on_querySample_clicked)
-        self.pushButton_saveModel.clicked.connect(self.on_saveModel_clicked)
+        self.pushButton_QuerySample.clicked.connect(self.querySample_clicked)
+        self.pushButton_saveModel.clicked.connect(self.saveModel_clicked)
 
         self.comboBox_sampleClass.setCurrentIndex(-1)
         self.checkBox.stateChanged.connect(self.onHeaderCheckBoxStateChanged) 
@@ -45,7 +45,7 @@ class TrainDialog(QDialog, Ui_Dialog):
             self.comboBox_sampleClass.addItem(child.get('EnglishName'))           
         self.comboBox_sampleClass.setCurrentIndex(-1)
 
-    def on_querySample_clicked(self):
+    def querySample_clicked(self):
         samplesClass = self.comboBox_sampleClass.currentText()
         self.sampleList = []
         #print(f"sampleClass={sampleClass}")    
@@ -102,7 +102,7 @@ class TrainDialog(QDialog, Ui_Dialog):
         from tools.CommonTool import show_info_message
         show_info_message(self, '样本选择', f"共选择{number_of_selected_rows}样本分库！")
 
-    def on_saveModel_clicked(self,Dialog):
+    def saveModel_clicked(self,Dialog):
         from qgis.PyQt.QtWidgets import QFileDialog
         folder_selected = QFileDialog.getExistingDirectory(None, "Select Folder to Save")
         if  folder_selected:

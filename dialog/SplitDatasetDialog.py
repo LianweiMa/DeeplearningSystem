@@ -19,7 +19,9 @@ class SplitDatasetDialog(QDialog, Ui_Dialog):
         icon.addPixmap(QPixmap(icon_Segment), QIcon.Normal, QIcon.Off)
         self.setWindowIcon(icon)
         self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))
-        self.pushButton_QuerySample.clicked.connect(self.on_querySample_clicked)
+        self.pushButton_QuerySample.clicked.connect(self.querySample_clicked)
+        self.lineEdit_valset.textEdited.connect(self.valset_text_changed)
+        self.lineEdit_testset.textEdited.connect(self.testset_text_changed)
 
         self.comboBox_sampleClass.setCurrentIndex(-1)
         #self.checkBox.stateChanged.connect(self.onHeaderCheckBoxStateChanged) 
@@ -45,7 +47,7 @@ class SplitDatasetDialog(QDialog, Ui_Dialog):
             self.comboBox_sampleClass.addItem(child.get('EnglishName'))           
         self.comboBox_sampleClass.setCurrentIndex(-1)
 
-    def on_querySample_clicked(self):
+    def querySample_clicked(self):
         samplesClass = self.comboBox_sampleClass.currentText()
         self.sampleList = []
         self.sampleNums = []
@@ -84,7 +86,7 @@ class SplitDatasetDialog(QDialog, Ui_Dialog):
         for row_index in range(self.model.rowCount()): 
             self.model.item(row_index, column_index).setCheckState(2 if row_index == row else 0)  # 2=选中, 0=未选 
 
-    def on_valset_text_changed(self,text):
+    def valset_text_changed(self,text):
         valsetNums = int(text)
         testsetNums = int(self.lineEdit_testset.text())
         column_index = 4
@@ -94,7 +96,7 @@ class SplitDatasetDialog(QDialog, Ui_Dialog):
                 self.lineEdit_trainset.setText(str(int(self.sampleNums[row_index])-valsetNums-testsetNums))
                 return
 
-    def on_testset_text_changed(self,text):
+    def testset_text_changed(self,text):
         valsetNums = int(self.lineEdit_valset.text())
         testsetNums = int(text)
         column_index = 4

@@ -20,7 +20,7 @@ class VectorLayerAttributeDialog(QDialog):
         self.setWindowTitle("属性表 - "+self.layer.name())
         vl = QHBoxLayout(self)
         self.tableView = QgsAttributeTableView(self)   
-        self.tableView.doubleClicked.connect(self.on_double_click)# 连接双击信号到槽函数
+        self.tableView.doubleClicked.connect(self.double_click)# 连接双击信号到槽函数
         self.resize(800, 600)
         vl.addWidget(self.tableView)
         self.center()
@@ -56,7 +56,7 @@ class VectorLayerAttributeDialog(QDialog):
         #self.tableView.edit()
         #print(self.tableView.currentIndex())
 
-    def on_double_click(self,index):
+    def double_click(self,index):
         # 获取当前选中的行
         #row = index.row()
         # 获取当前行的属性值

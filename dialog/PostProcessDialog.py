@@ -21,8 +21,8 @@ class PostProcessDialog(QDialog, Ui_Dialog):
         self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))
 
 
-        self.pushButton_openImage.clicked.connect(self.on_openImage_clicked)####################
-        self.pushButton_saveImage.clicked.connect(self.on_saveImage_clicked)###################
+        self.pushButton_openImage.clicked.connect(self.openImage_clicked)####################
+        self.pushButton_saveImage.clicked.connect(self.saveImage_clicked)###################
 
         self.__initial__()
 
@@ -36,14 +36,14 @@ class PostProcessDialog(QDialog, Ui_Dialog):
                 filepath = layer.dataProvider().dataSourceUri()
                 self.comboBox_openImage.addItem(filepath)
 
-    def on_openImage_clicked(self,Dialog):
+    def openImage_clicked(self,Dialog):
         from qgis.PyQt.QtWidgets import QFileDialog
         path_to_tif,_ = QFileDialog.getOpenFileName(None, '打开', '', 'Raster Files (*.img);;All Files (*.*)')
         if  path_to_tif=="":
             return
         self.comboBox_openImage.setCurrentText(path_to_tif)
 
-    def on_saveImage_clicked(self,Dialog):
+    def saveImage_clicked(self,Dialog):
         from qgis.PyQt.QtWidgets import QFileDialog
         path_to_tif,_ = QFileDialog.getSaveFileName(None, '保存', '', 'Raster Files (*.img);;All Files (*.*)')
         if  path_to_tif=="":

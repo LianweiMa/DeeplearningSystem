@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'EvalSampleUI.ui'
+# Form implementation generated from reading ui file 'EvalSamplesUI.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -105,6 +105,7 @@ class Ui_Dialog(object):
         self.comboBox_modelList = QtWidgets.QComboBox(self.groupBox_setPara)
         self.comboBox_modelList.setEnabled(True)
         self.comboBox_modelList.setEditable(False)
+        self.comboBox_modelList.setSizeAdjustPolicy(QtWidgets.QComboBox.AdjustToContents)
         self.comboBox_modelList.setObjectName("comboBox_modelList")
         self.gridLayout.addWidget(self.comboBox_modelList, 1, 1, 1, 2)
         self.verticalLayout_3.addLayout(self.gridLayout)

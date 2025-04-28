@@ -37,7 +37,7 @@ class EvalSampleThread(QThread):
         netType = self.ui.comboBox_modelNet.currentText()
         sampleClass = self.ui.comboBox_sampleClass.currentText()
         sampleLists = self.ui.selectSampleList
-        modelFile = self.ui.m_modelFile
+        modelFile = self.ui.m_modelFile[self.ui.comboBox_modelList.currentIndex()]
         if (netType == 'AUNet'):
             from net.AU_Net import AttU_Net
             net = AttU_Net(3, 2)

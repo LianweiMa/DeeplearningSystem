@@ -20,14 +20,14 @@ class MakeSamplesDialog(QDialog, Ui_Dialog):
         self.setWindowIcon(icon)
         self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))
 
-        self.pushButton_OpenImageFile.clicked.connect(self.on_openImageFile_clicked)
-        self.pushButton_OpenLabelFile.clicked.connect(self.on_openLabelFile_clicked)
-        self.pushButton_OpenBoundaryFile.clicked.connect(self.on_openBoundaryFile_clicked)          
-        self.pushButton_OpenSamplePath.clicked.connect(self.on_saveSamplePath_clicked)  
+        self.pushButton_OpenImageFile.clicked.connect(self.openImageFile_clicked)
+        self.pushButton_OpenLabelFile.clicked.connect(self.openLabelFile_clicked)
+        self.pushButton_OpenBoundaryFile.clicked.connect(self.openBoundaryFile_clicked)          
+        self.pushButton_OpenSamplePath.clicked.connect(self.saveSamplePath_clicked)  
         self.comboBox_sampleClass.addItems(["building", "road", "mine", "water", "forest", "pv", "greenhouse", "desert"])     
         self.comboBox_sampleClass.setCurrentIndex(-1)
 
-    def on_openImageFile_clicked(self,Dialog):
+    def openImageFile_clicked(self,Dialog):
         from qgis.PyQt.QtWidgets import QFileDialog
         path_to_tif,_ = QFileDialog.getOpenFileName(None, '打开', '', 'Raster Files (*.tif;*.tiff;*.img;*.dat);;All Files (*.*)')
         if  path_to_tif=="":
@@ -48,21 +48,21 @@ class MakeSamplesDialog(QDialog, Ui_Dialog):
         self.lineEdit_sampleGSD.setText(str(pixel_size))
         dataset = None
 
-    def on_openLabelFile_clicked(self,Dialog):
+    def openLabelFile_clicked(self,Dialog):
         from qgis.PyQt.QtWidgets import QFileDialog
         path_to_vec,_ = QFileDialog.getOpenFileName(None, '打开', '', 'Shape Files (*.shp);;All Files (*.*)')
         if  path_to_vec=="":
             return
         self.lineEdit_label.setText(path_to_vec)
 
-    def on_openBoundaryFile_clicked(self,Dialog):
+    def openBoundaryFile_clicked(self,Dialog):
         from qgis.PyQt.QtWidgets import QFileDialog
         path_to_vec,_ = QFileDialog.getOpenFileName(None, '打开', '', 'Shape Files (*.shp);;All Files (*.*)')
         if  path_to_vec=="":
             return
         self.lineEdit_boundary.setText(path_to_vec)
 
-    def on_saveSamplePath_clicked(self,Dialog):
+    def saveSamplePath_clicked(self,Dialog):
         from qgis.PyQt.QtWidgets import QFileDialog
         folder_selected = QFileDialog.getExistingDirectory(None, "Select Folder to Save")
         if  folder_selected:

@@ -32,6 +32,13 @@ class SwipeMapTool(QgsMapTool):
         QgsProject.instance().layersAdded.connect(self._update_layers)
         QgsProject.instance().layersRemoved.connect(self._update_layers)
         layer_combo.currentIndexChanged.connect(self._update_layers)
+        # 添加地图范围变化监听
+        self.canvas.extentsChanged.connect(self._on_extents_changed)
+    
+    def _on_extents_changed(self):
+        """当地图范围变化时重新渲染对比图层"""
+        if self.isActive():
+            self.swipe_item._render_layers()
     
     def _update_layers(self):
         """更新要对比的图层"""
@@ -53,6 +60,8 @@ class SwipeMapTool(QgsMapTool):
     def deactivate(self):
         if hasattr(self, 'swipe_item') and self.swipe_item:
             try:
+                # 断开连接
+                self.canvas.extentsChanged.disconnect(self._on_extents_changed)
                 self.swipe_item.clear_position()
                 self.swipe_item.hide()
             except RuntimeError:  # 如果 canvas 已被销毁
@@ -114,6 +123,9 @@ class SwipeCanvasItem(QgsMapCanvasItem):
         self.line_pen = QPen(QColor(0, 0, 255))
         self.line_pen.setWidth(2)
         self.line_pen.setStyle(Qt.DashLine)
+
+        # 添加地图范围变化监听
+        self.canvas.extentsChanged.connect(self.update)
     
     def set_layers(self, layers):
         self.layers = layers
@@ -129,19 +141,30 @@ class SwipeCanvasItem(QgsMapCanvasItem):
         if not self.canvas:
             return
             
+        # 断开连接
+        try:
+            self.canvas.extentsChanged.disconnect(self.update)
+        except:
+            pass
+        
         self.position = None
         self.update()
         try:
             self.canvas.refresh()
         except RuntimeError:
             pass
-    
+        
     def _render_layers(self):
         if not self.layers:
             return
             
         settings = QgsMapSettings(self.canvas.mapSettings())
         settings.setLayers(self.layers)
+        
+        # 确保使用与当前视图相同的范围和比例
+        settings.setExtent(self.canvas.extent())
+        settings.setOutputSize(self.canvas.size())
+        settings.setOutputDpi(self.canvas.logicalDpiX())
         
         self._render_job = QgsMapRendererParallelJob(settings)
         
@@ -201,8 +224,8 @@ class SwipeCanvasItem(QgsMapCanvasItem):
                 painter.drawImage(
                     QRectF(0, split_pos, width, height - split_pos),
                     self.image,
-                    QRectF(0, split_pos, width, height - split_pos))
-    
+                    QRectF(0, split_pos, width, height - split_pos))   
+                
     def boundingRect(self):
         size = self.canvas.size()
         return QRectF(0, 0, size.width(), size.height())

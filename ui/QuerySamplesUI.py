@@ -95,6 +95,7 @@ class Ui_Dialog(object):
 
         self.retranslateUi(Dialog)
         self.comboBox_Class.setCurrentIndex(-1)
+        self.pushButton_querySample.clicked.connect(Dialog.accept) # type: ignore
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
