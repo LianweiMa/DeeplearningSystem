@@ -564,6 +564,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
                     encoding='utf-8', 
                     xml_declaration=True, 
                     pretty_print=True)   
+            self.updateDatabase()
             show_info_message(self, "信息", "样本导入完成!")   
         elif result == QDialog.Rejected:
             print("User clicked Close or pressed Escape")
@@ -607,6 +608,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
                             encoding='utf-8', 
                             xml_declaration=True, 
                             pretty_print=True)
+                    self.updateDatabase()
                     show_info_message(self, "信息", "样本删除完成!")  
     
     # 样本库查询
@@ -780,7 +782,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
                                                     }).text = self.importModelsDialog.lineEdit_ModelsPath.text()
             else:
                 node = nodes[0]
-                save = show_question_message(self, '模型导入', "存在相同的模型，确定要导入吗？\n如果导入，将会覆盖！")
+                save = show_question_message(self.importModelsDialog, '模型导入', "存在相同的模型，确定要导入吗？\n如果导入，将会覆盖！")
                 if save == QMessageBox.Yes:
                     node.text = self.importModelsDialog.lineEdit_ModelsPath.text()  # 更新文本内容
                 else:
@@ -789,8 +791,9 @@ class mainWin(QMainWindow, Ui_MainWindow):
             tree.write(model_cofing_path, 
                     encoding='utf-8', 
                     xml_declaration=True, 
-                    pretty_print=True)   
-            show_info_message(self, "模型导入", "模型导入完成!")   
+                    pretty_print=True) 
+            self.updateModelsDB()
+            show_info_message(self.importModelsDialog, "模型导入", "模型导入完成!")   
         elif result == QDialog.Rejected:
             print("User clicked Close or pressed Escape")
 
@@ -816,7 +819,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
                         # 尝试获取节点
                         node = tree.xpath(f'//ModelPath[@Name="{name}"]')[0]
                         if node is not None:
-                            delete = show_question_message(self, '删除模型', f"确定要删除名称为“{name}”的模型吗？")
+                            delete = show_question_message(self.deleteModelsDialog, '删除模型', f"确定要删除名称为“{name}”的模型吗？")
                             if delete == QMessageBox.Yes:
                                 node.getparent().remove(node)
                             else:
@@ -832,7 +835,8 @@ class mainWin(QMainWindow, Ui_MainWindow):
                             encoding='utf-8', 
                             xml_declaration=True, 
                             pretty_print=True)
-                    show_info_message(self, "删除模型", "模型删除完成!")  
+                    self.updateModelsDB()
+                    show_info_message(self.deleteModelsDialog, "删除模型", "模型删除完成!")  
 
     # 模型统计
     def modelStatistic(self):
@@ -1216,8 +1220,6 @@ class mainWin(QMainWindow, Ui_MainWindow):
         if not db_models.commit():
             print("提交失败:", db_models.lastError().text()) 
         db_models.close()
-        del query
-        print(connection_name)
         QSqlDatabase.removeDatabase(connection_name)  # 移除自定义名称的连接
         time_end=time.time() 
         self.progress_bar.setText(f"处理完成: 花费时间 {((time_end-time_start)/60.0):.2f} 分钟") 

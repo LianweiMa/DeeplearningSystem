@@ -19,9 +19,9 @@ class EvalSamplesDialog(QDialog, Ui_Dialog):
         # 在这里添加你的逻辑代码
         from os.path import join
         from DeeplearningSystem import base_dir
-        icon_Segment = join(base_dir, 'settings/icon', 'Sample_Evalue.png') 
+        png = join(base_dir, 'settings/icon', 'label_eval.png') 
         icon = QIcon()
-        icon.addPixmap(QPixmap(icon_Segment), QIcon.Normal, QIcon.Off)
+        icon.addPixmap(QPixmap(png), QIcon.Normal, QIcon.Off)
         self.setWindowIcon(icon)
         self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))
 

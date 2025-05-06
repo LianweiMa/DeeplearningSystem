@@ -22,7 +22,7 @@ class Ui_Dialog(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.toolButton_AttributeSelect = QtWidgets.QToolButton(Dialog)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/icon/VectorEditor_AttributeEdit.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(":/icon/AttributeQuery.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.toolButton_AttributeSelect.setIcon(icon)
         self.toolButton_AttributeSelect.setIconSize(QtCore.QSize(25, 25))
         self.toolButton_AttributeSelect.setAutoRepeat(False)

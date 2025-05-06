@@ -21,7 +21,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-    <normaloff>:/icon/mainWindow.png</normaloff>:/icon/mainWindow.png</iconset>
+    <normaloff>:/icon/mainWindow2.png</normaloff>:/icon/mainWindow2.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -209,15 +209,19 @@
    <addaction name="separator"/>
    <addaction name="actionMakeSample"/>
    <addaction name="actionEvalSample"/>
+   <addaction name="actionQuerySample"/>
+   <addaction name="actionUpdateModelsDB"/>
    <addaction name="separator"/>
    <addaction name="actionImportSample"/>
    <addaction name="actionDeleteSamples"/>
-   <addaction name="actionQuerySample"/>
    <addaction name="actionCloseSamples"/>
+   <addaction name="actionSampleStatistic"/>
    <addaction name="separator"/>
    <addaction name="actionModelTrain"/>
    <addaction name="actionStopTrain"/>
    <addaction name="actionWatchTrain"/>
+   <addaction name="separator"/>
+   <addaction name="actionUpdateDatabase"/>
    <addaction name="actionImportModel"/>
    <addaction name="actionDeleteModel"/>
    <addaction name="actionModelStatistic"/>
@@ -485,7 +489,7 @@
   <action name="actionMakeSample">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/MakeSample.png</normaloff>:/icon/MakeSample.png</iconset>
+     <normaloff>:/icon/label_create.png</normaloff>:/icon/label_create.png</iconset>
    </property>
    <property name="text">
     <string>样本制作</string>
@@ -494,7 +498,7 @@
   <action name="actionEvalSample">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/Sample_Evalue.png</normaloff>:/icon/Sample_Evalue.png</iconset>
+     <normaloff>:/icon/label_eval.png</normaloff>:/icon/label_eval.png</iconset>
    </property>
    <property name="text">
     <string>样本评估</string>
@@ -503,7 +507,7 @@
   <action name="actionImportSample">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/label_import.png</normaloff>:/icon/label_import.png</iconset>
+     <normaloff>:/icon/label_import1.png</normaloff>:/icon/label_import1.png</iconset>
    </property>
    <property name="text">
     <string>样本导入</string>
@@ -512,7 +516,7 @@
   <action name="actionDeleteSamples">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/label_delete.png</normaloff>:/icon/label_delete.png</iconset>
+     <normaloff>:/icon/label_delete1.png</normaloff>:/icon/label_delete1.png</iconset>
    </property>
    <property name="text">
     <string>样本删除</string>
@@ -521,7 +525,7 @@
   <action name="actionQuerySample">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/Query.png</normaloff>:/icon/Query.png</iconset>
+     <normaloff>:/icon/label_query.png</normaloff>:/icon/label_query.png</iconset>
    </property>
    <property name="text">
     <string>样本查询</string>
@@ -533,7 +537,7 @@
    </property>
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/label_close.png</normaloff>:/icon/label_close.png</iconset>
+     <normaloff>:/icon/label_close1.png</normaloff>:/icon/label_close1.png</iconset>
    </property>
    <property name="text">
     <string>样本关闭</string>
@@ -617,7 +621,7 @@
   <action name="actionPostClump">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/Segment2.png</normaloff>:/icon/Segment2.png</iconset>
+     <normaloff>:/icon/ImgClass_Post_Comb.png</normaloff>:/icon/ImgClass_Post_Comb.png</iconset>
    </property>
    <property name="text">
     <string>聚类</string>
@@ -635,7 +639,7 @@
   <action name="actionSplitDataSet">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/SplitDataset.png</normaloff>:/icon/SplitDataset.png</iconset>
+     <normaloff>:/icon/SplitDataset1.png</normaloff>:/icon/SplitDataset1.png</iconset>
    </property>
    <property name="text">
     <string>划分数据集</string>
@@ -656,7 +660,7 @@
   <action name="actionSampleStatistic">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/statistic.png</normaloff>:/icon/statistic.png</iconset>
+     <normaloff>:/icon/label_statistic.png</normaloff>:/icon/label_statistic.png</iconset>
    </property>
    <property name="text">
     <string>样本统计</string>
@@ -665,7 +669,7 @@
   <action name="actionUpdateDatabase">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/Batch_TransformToDb.png</normaloff>:/icon/Batch_TransformToDb.png</iconset>
+     <normaloff>:/icon/net_update.png</normaloff>:/icon/net_update.png</iconset>
    </property>
    <property name="text">
     <string>更新样本数据库</string>
@@ -706,7 +710,7 @@
   <action name="actionUpdateModelsDB">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/HypHySime.png</normaloff>:/icon/HypHySime.png</iconset>
+     <normaloff>:/icon/label_update.png</normaloff>:/icon/label_update.png</iconset>
    </property>
    <property name="text">
     <string>更新模型数据库</string>

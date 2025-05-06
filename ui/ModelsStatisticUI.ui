@@ -29,7 +29,7 @@
        </property>
        <property name="icon">
         <iconset resource="../settings/icon/SamplesStatistic.qrc">
-         <normaloff>:/icon/VectorEditor_AttributeEdit.png</normaloff>:/icon/VectorEditor_AttributeEdit.png</iconset>
+         <normaloff>:/icon/AttributeQuery.png</normaloff>:/icon/AttributeQuery.png</iconset>
        </property>
        <property name="iconSize">
         <size>

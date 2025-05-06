@@ -1,6 +1,19 @@
 <RCC>
   <qresource prefix="icon">
+    <file>mainWindow2.png</file>
+    <file>ImgClass_Post_Comb.png</file>
+    <file>Segment.png</file>
+    <file>net_update.png</file>
+    <file>SplitDataset1.png</file>
+    <file>label_update.png</file>
+    <file>label_eval.png</file>
+    <file>label_create.png</file>
+    <file>label_query.png</file>
+    <file>label_close1.png</file>
+    <file>label_delete1.png</file>
+    <file>label_import1.png</file>
     <file>net_statistic.png</file>
+    <file>label_statistic.png</file>
     <file>net_delete.png</file>
     <file>net_import.png</file>
     <file>HypHySime.png</file>

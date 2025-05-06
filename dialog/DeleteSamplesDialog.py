@@ -18,7 +18,7 @@ class DeleteSamplesDialog(QDialog, Ui_Dialog):
         # 在这里添加你的逻辑代码
         from os.path import join
         from DeeplearningSystem import base_dir
-        icon_Segment = join(base_dir, 'settings/icon', 'label_delete.png') 
+        icon_Segment = join(base_dir, 'settings/icon', 'label_delete1.png') 
         icon = QIcon()
         icon.addPixmap(QPixmap(icon_Segment), QIcon.Normal, QIcon.Off)
         self.setWindowIcon(icon)

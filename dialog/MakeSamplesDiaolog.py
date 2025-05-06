@@ -14,7 +14,7 @@ class MakeSamplesDialog(QDialog, Ui_Dialog):
         # 在这里添加你的逻辑代码
         from os.path import join
         from DeeplearningSystem import base_dir
-        png = join(base_dir, 'settings/icon', 'MakeSample.png') 
+        png = join(base_dir, 'settings/icon', 'label_create.png') 
         icon = QIcon()
         icon.addPixmap(QPixmap(png), QIcon.Normal, QIcon.Off)
         self.setWindowIcon(icon)
