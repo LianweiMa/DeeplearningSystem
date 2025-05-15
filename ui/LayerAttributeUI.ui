@@ -56,7 +56,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="rasterLayerInfoTab">
         <attribute name="title">
@@ -91,7 +91,7 @@
             <widget class="QLabel" name="label_3">
              <property name="maximumSize">
               <size>
-               <width>100</width>
+               <width>50</width>
                <height>16777215</height>
               </size>
              </property>
@@ -115,7 +115,7 @@
             <widget class="QLabel" name="label_5">
              <property name="maximumSize">
               <size>
-               <width>100</width>
+               <width>50</width>
                <height>16777215</height>
               </size>
              </property>
@@ -139,12 +139,12 @@
             <widget class="QLabel" name="label_7">
              <property name="maximumSize">
               <size>
-               <width>100</width>
+               <width>50</width>
                <height>16777215</height>
               </size>
              </property>
              <property name="text">
-              <string>大小合计</string>
+              <string>大小</string>
              </property>
             </widget>
            </item>
@@ -185,7 +185,7 @@
             <widget class="QLabel" name="label_10">
              <property name="maximumSize">
               <size>
-               <width>100</width>
+               <width>50</width>
                <height>16777215</height>
               </size>
              </property>
@@ -209,17 +209,17 @@
             <widget class="QLabel" name="label_12">
              <property name="maximumSize">
               <size>
-               <width>100</width>
+               <width>50</width>
                <height>16777215</height>
               </size>
              </property>
              <property name="text">
-              <string>宽度</string>
+              <string>宽和高</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="rasterWidthLabel">
+            <widget class="QLabel" name="rasterWHLabel">
              <property name="text">
               <string>TextLabel</string>
              </property>
@@ -233,17 +233,17 @@
             <widget class="QLabel" name="label_14">
              <property name="maximumSize">
               <size>
-               <width>100</width>
+               <width>50</width>
                <height>16777215</height>
               </size>
              </property>
              <property name="text">
-              <string>高度</string>
+              <string>分辨率</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="rasterHeightLabel">
+            <widget class="QLabel" name="rasterGSDLabel">
              <property name="text">
               <string>TextLabel</string>
              </property>
@@ -257,7 +257,7 @@
             <widget class="QLabel" name="label_16">
              <property name="maximumSize">
               <size>
-               <width>100</width>
+               <width>50</width>
                <height>16777215</height>
               </size>
              </property>
@@ -281,7 +281,7 @@
             <widget class="QLabel" name="label_18">
              <property name="maximumSize">
               <size>
-               <width>100</width>
+               <width>50</width>
                <height>16777215</height>
               </size>
              </property>
@@ -305,7 +305,7 @@
             <widget class="QLabel" name="label_20">
              <property name="maximumSize">
               <size>
-               <width>100</width>
+               <width>50</width>
                <height>16777215</height>
               </size>
              </property>

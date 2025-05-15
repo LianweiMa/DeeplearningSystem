@@ -1,6 +1,6 @@
 <RCC>
   <qresource prefix="icon">
     <file>AttributeQuery.png</file>
-    <file>MarkTool_MarkClear.png</file>
+    <file>ClearSelection.png</file>
   </qresource>
 </RCC>

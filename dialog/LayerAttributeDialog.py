@@ -4,7 +4,6 @@ from qgis.core import QgsVectorLayer,QgsRasterLayer,QgsStyle,QgsRasterDataProvid
 from qgis.gui import QgsRendererRasterPropertiesWidget,QgsSingleSymbolRendererWidget,QgsCategorizedSymbolRendererWidget
 from PyQt5.QtWidgets import QDialog, QListWidgetItem, QTabBar
 import os.path as osp
-from PyQt5.QtGui import  QIcon, QPixmap
 from PyQt5.QtCore import Qt
 from qgis.core import QgsFeature
 from ui.LayerAttributeUI import Ui_Dialog
@@ -26,12 +25,6 @@ class LayerAttributeDialog(QDialog, Ui_Dialog):
         self.connectFunc()
 
         # 在这里添加你的逻辑代码
-        from os.path import join
-        from DeeplearningSystem import base_dir
-        #icon_Segment = join(base_dir, 'settings/icon', 'mainWindow.png') 
-        #icon = QIcon()
-        #icon.addPixmap(QPixmap(icon_Segment), QIcon.Normal, QIcon.Off)
-        #self.setWindowIcon(icon)
         self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))
 
     def initUI(self):
@@ -61,8 +54,8 @@ class LayerAttributeDialog(QDialog, Ui_Dialog):
             self.rasterSourceLabel.setText(rasterLayerDict['source'])
             self.rasterMemoryLabel.setText(rasterLayerDict['memory'])
             self.rasterExtentLabel.setText(rasterLayerDict['extent'])
-            self.rasterWidthLabel.setText(rasterLayerDict['width'])
-            self.rasterHeightLabel.setText(rasterLayerDict['height'])
+            self.rasterWHLabel.setText(f"{rasterLayerDict['width']},{rasterLayerDict['height']}")
+            self.rasterGSDLabel.setText(f"{rasterLayerDict['gsdX']},{rasterLayerDict['gsdY']}")
             self.rasterDataTypeLabel.setText(rasterLayerDict['dataType'])
             self.rasterBandNumLabel.setText(rasterLayerDict['bands'])
             self.rasterCrsLabel.setText(rasterLayerDict['crs'])
@@ -179,14 +172,16 @@ def getRasterLayerAttrs(rasterLayer:QgsRasterLayer):
     extent: QgsRectangle = rasterLayer.extent()
     resDict = {
         "name" : rasterLayer.name(),
-        "source" : rasterLayer.source(),
+        "source" : osp.dirname(rasterLayer.source()),
         "memory" : getFileSize(rasterLayer.source()),
         "extent" : f"min:[{extent.xMinimum():.6f},{extent.yMinimum():.6f}]; max:[{extent.xMaximum():.6f},{extent.yMaximum():.6f}]",
         "width" : f"{rasterLayer.width()}",
         "height" : f"{rasterLayer.height()}",
         "dataType" : qgisDataTypeDict[rdp.dataType(1)],
         "bands" : f"{rasterLayer.bandCount()}",
-        "crs" : crs.description()
+        "crs" : crs.description(),
+        "gsdX" : f"{rasterLayer.rasterUnitsPerPixelX()}",
+        "gsdY" : f"{rasterLayer.rasterUnitsPerPixelY()}"
     }
     return resDict
 
@@ -196,7 +191,7 @@ def getVectorLayerAttrs(vectorLayer:QgsVectorLayer):
     extent: QgsRectangle = vectorLayer.extent()
     resDict = {
         "name" : vectorLayer.name(),
-        "source" : vectorLayer.source(),
+        "source" : osp.dirname(vectorLayer.source()),
         "memory": getFileSize(vectorLayer.source()),
         "extent" : f"min:[{extent.xMinimum():.6f},{extent.yMinimum():.6f}]; max:[{extent.xMaximum():.6f},{extent.yMaximum():.6f}]",
         "geoType" : QgsWkbTypes.geometryDisplayString(vectorLayer.geometryType()),

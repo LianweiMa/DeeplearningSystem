@@ -17,7 +17,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>基于深度学习的遥感影像信息提取系统</string>
+   <string>遥感影像智能解译系统</string>
   </property>
   <property name="windowIcon">
    <iconset resource="../settings/icon/DeepLearningSystem.qrc">
@@ -103,9 +103,13 @@
     <property name="title">
      <string>样本</string>
     </property>
+    <addaction name="actionCreateFishnet"/>
+    <addaction name="actionCreateShape"/>
+    <addaction name="separator"/>
     <addaction name="actionEditSample"/>
     <addaction name="actionDrawPolygon"/>
-    <addaction name="actionSelectSample"/>
+    <addaction name="actionSelectFeature"/>
+    <addaction name="actionClearSelection"/>
     <addaction name="actionDeleteSample"/>
     <addaction name="separator"/>
     <addaction name="actionMakeSample"/>
@@ -133,7 +137,6 @@
     <property name="title">
      <string>处理</string>
     </property>
-    <addaction name="actionSelectFeature"/>
     <addaction name="actionDrawRect"/>
     <addaction name="actionClearDraw"/>
     <addaction name="separator"/>
@@ -204,13 +207,13 @@
    <addaction name="separator"/>
    <addaction name="actionEditSample"/>
    <addaction name="actionDrawPolygon"/>
-   <addaction name="actionSelectSample"/>
+   <addaction name="actionSelectFeature"/>
+   <addaction name="actionClearSelection"/>
    <addaction name="actionDeleteSample"/>
    <addaction name="separator"/>
    <addaction name="actionMakeSample"/>
    <addaction name="actionEvalSample"/>
    <addaction name="actionQuerySample"/>
-   <addaction name="actionUpdateModelsDB"/>
    <addaction name="separator"/>
    <addaction name="actionImportSample"/>
    <addaction name="actionDeleteSamples"/>
@@ -221,12 +224,10 @@
    <addaction name="actionStopTrain"/>
    <addaction name="actionWatchTrain"/>
    <addaction name="separator"/>
-   <addaction name="actionUpdateDatabase"/>
    <addaction name="actionImportModel"/>
    <addaction name="actionDeleteModel"/>
    <addaction name="actionModelStatistic"/>
    <addaction name="separator"/>
-   <addaction name="actionSelectFeature"/>
    <addaction name="actionDrawRect"/>
    <addaction name="actionClearDraw"/>
    <addaction name="separator"/>
@@ -235,6 +236,8 @@
    <addaction name="actionPostClump"/>
    <addaction name="actionRasterToVector"/>
    <addaction name="separator"/>
+   <addaction name="actionUpdateModelsDB"/>
+   <addaction name="actionUpdateDatabase"/>
    <addaction name="actionSplitDataSet"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget">
@@ -450,7 +453,7 @@
    </property>
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/VectorEditor_Edit.png</normaloff>:/icon/VectorEditor_Edit.png</iconset>
+     <normaloff>:/icon/Edit.png</normaloff>:/icon/Edit.png</iconset>
    </property>
    <property name="text">
     <string>编辑矢量</string>
@@ -463,18 +466,6 @@
    </property>
    <property name="text">
     <string>画多边形</string>
-   </property>
-  </action>
-  <action name="actionSelectSample">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/MarkTool_SelectElement.png</normaloff>:/icon/MarkTool_SelectElement.png</iconset>
-   </property>
-   <property name="text">
-    <string>选择要素</string>
    </property>
   </action>
   <action name="actionDeleteSample">
@@ -576,22 +567,10 @@
     <string>监视训练</string>
    </property>
   </action>
-  <action name="actionSelectFeature">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/VectorEditor_SelectFeature.png</normaloff>:/icon/VectorEditor_SelectFeature.png</iconset>
-   </property>
-   <property name="text">
-    <string>选择要素</string>
-   </property>
-  </action>
   <action name="actionDrawRect">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/MarkTool_DrawRectElement.png</normaloff>:/icon/MarkTool_DrawRectElement.png</iconset>
+     <normaloff>:/icon/VectorEditor_DrawRectangleFeature.png</normaloff>:/icon/VectorEditor_DrawRectangleFeature.png</iconset>
    </property>
    <property name="text">
     <string>画矩形</string>
@@ -714,6 +693,45 @@
    </property>
    <property name="text">
     <string>更新模型数据库</string>
+   </property>
+  </action>
+  <action name="actionCreateFishnet">
+   <property name="icon">
+    <iconset resource="../settings/icon/DeepLearningSystem.qrc">
+     <normaloff>:/icon/create_fishnet.png</normaloff>:/icon/create_fishnet.png</iconset>
+   </property>
+   <property name="text">
+    <string>创建渔网</string>
+   </property>
+  </action>
+  <action name="actionCreateShape">
+   <property name="icon">
+    <iconset resource="../settings/icon/DeepLearningSystem.qrc">
+     <normaloff>:/icon/VectorEditor_CreateLayer.png</normaloff>:/icon/VectorEditor_CreateLayer.png</iconset>
+   </property>
+   <property name="text">
+    <string>创建矢量</string>
+   </property>
+  </action>
+  <action name="actionClearSelection">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../settings/icon/DeepLearningSystem.qrc">
+     <normaloff>:/icon/VectorEditor_ClearSelection.png</normaloff>:/icon/VectorEditor_ClearSelection.png</iconset>
+   </property>
+   <property name="text">
+    <string>清除选择</string>
+   </property>
+  </action>
+  <action name="actionSelectFeature">
+   <property name="icon">
+    <iconset resource="../settings/icon/DeepLearningSystem.qrc">
+     <normaloff>:/icon/VectorEditor_SelectFeature.png.png</normaloff>:/icon/VectorEditor_SelectFeature.png.png</iconset>
+   </property>
+   <property name="text">
+    <string>选择要素</string>
    </property>
   </action>
  </widget>

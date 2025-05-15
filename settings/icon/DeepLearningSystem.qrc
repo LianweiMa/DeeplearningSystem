@@ -1,5 +1,14 @@
 <RCC>
   <qresource prefix="icon">
+    <file>VectorEditor_DrawRectangleFeature.png</file>
+    <file>Edit.png</file>
+    <file>VectorEditor_ClearSelection.png</file>
+    <file>VectorEditor_CreateLayer.png</file>
+    <file>CartoGraphy_Pan.png</file>
+    <file>CartoGraphy_ZoomIn.png</file>
+    <file>CartoGraphy_ZoomOut.png</file>
+    <file>CartoGraphy_ZoomToWhole.png</file>
+    <file>create_fishnet.png</file>
     <file>mainWindow2.png</file>
     <file>ImgClass_Post_Comb.png</file>
     <file>Segment.png</file>
@@ -74,6 +83,6 @@
     <file>VectorEditor_DeleteFeature.png</file>
     <file>VectorEditor_DrawPolygonFeature.png</file>
     <file>VectorEditor_Edit.png</file>
-    <file>VectorEditor_SelectFeature.png</file>
+    <file>VectorEditor_SelectFeature.png.png</file>
   </qresource>
 </RCC>

@@ -70,7 +70,7 @@
        </property>
        <property name="icon">
         <iconset resource="../settings/icon/SamplesStatistic.qrc">
-         <normaloff>:/icon/MarkTool_MarkClear.png</normaloff>:/icon/MarkTool_MarkClear.png</iconset>
+         <normaloff>:/icon/ClearSelection.png</normaloff>:/icon/ClearSelection.png</iconset>
        </property>
        <property name="iconSize">
         <size>

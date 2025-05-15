@@ -33,7 +33,6 @@ class SegmentDialog(QDialog, Ui_Dialog):
         
         # 初始化数据
         self.comboBox_openImage.clear()
-        self.comboBox_openImage.currentIndex = -1
         for layer_name, layer in QgsProject.instance().mapLayers().items():
             if isinstance(layer, QgsRasterLayer):
                 filepath = layer.dataProvider().dataSourceUri()

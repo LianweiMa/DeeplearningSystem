@@ -36,7 +36,7 @@ class Ui_Dialog(object):
         self.toolButton_ClearSelect = QtWidgets.QToolButton(Dialog)
         self.toolButton_ClearSelect.setEnabled(False)
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(":/icon/MarkTool_MarkClear.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon1.addPixmap(QtGui.QPixmap(":/icon/ClearSelection.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.toolButton_ClearSelect.setIcon(icon1)
         self.toolButton_ClearSelect.setIconSize(QtCore.QSize(25, 25))
         self.toolButton_ClearSelect.setAutoRaise(True)

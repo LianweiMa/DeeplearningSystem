@@ -110,7 +110,7 @@ class CustomMenuProvider(QgsLayerTreeViewMenuProvider):
         try:
             from dialog.LayerAttributeDialog import LayerAttributeDialog
             self.lp = LayerAttributeDialog(layer,self.mainWindow)
-            print(type(self.lp))
+            #print(type(self.lp))
             self.lp.show()
         except:
             import traceback

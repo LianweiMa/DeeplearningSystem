@@ -61,6 +61,7 @@ class RecentFilesMenu:
         
         # 加载新工程
         if self.main_window.addProject(path):
+            self.main_window.new = False
             self.manager.add_recent_file(path)
             title = self.main_window.title
             self.main_window.setWindowTitle(f"{os.path.basename(path).split('.')[0]} - {title.split(' - ')[1] if title.find('-')>=0 else title}")
