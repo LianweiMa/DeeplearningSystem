@@ -26,14 +26,6 @@ class CreateShapeDialog(QDialog, Ui_Dialog):
         self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))
         self.comboBox_featureType.addItems([ "点", "线", "面" ])
         self.comboBox_featureType.setCurrentIndex(-1)    
-        # 5.0 样本管理栏(右) 
-        '''    
-        self.model = QStandardItemModel() # 创建模型并设置数据
-        self.model.setHorizontalHeaderLabels(["名称", "类型", "宽度", "精度", "编辑"])  # 设置列头标签       
-        self.tableView.setModel(self.model)# 创建表格视图
-        self.tableView.resizeColumnsToContents()       
-        self.tableView.horizontalHeader().setSectionsClickable(True)# 设置 QTableView 的列头可排序   
-        '''
 
         self.pushButton_output.clicked.connect(self.output_clicked)    
         self.pushButton_openCrs.clicked.connect(self.openCrs_clicked)  

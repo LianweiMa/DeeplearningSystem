@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 from PyQt5.QtWidgets import QDialog,QMainWindow,QHBoxLayout,QFileDialog,QMessageBox,QLabel,QWidget,QApplication
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor, QIcon
-from PyQt5.QtCore import Qt, QMimeData
+from PyQt5.QtCore import Qt, QMimeData, QVariant
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery
 from qgis.core import (
     QgsLayerTreeLayer, QgsProject, QgsLayerTreeModel, QgsRasterLayer, 
     QgsVectorLayer, QgsMapLayer, QgsCoordinateReferenceSystem, QgsMapLayerType, QgsMapSettings, 
-    QgsRectangle, QgsFillSymbol, QgsSingleSymbolRenderer,QgsInvertedPolygonRenderer
+    QgsRectangle, QgsFillSymbol, QgsSingleSymbolRenderer,QgsInvertedPolygonRenderer,
+    QgsFeature, QgsGeometry, QgsField, QgsFields,QgsVectorFileWriter,QgsVectorFileWriter,edit,QgsWkbTypes
 )
-from qgis.gui import QgsMapCanvas, QgsLayerTreeView, QgsLayerTreeMapCanvasBridge, QgsMapToolPan, QgsMapToolZoom, QgsMapToolIdentifyFeature
+from qgis.gui import QgsMapCanvas, QgsLayerTreeView, QgsLayerTreeMapCanvasBridge, QgsMapToolPan, QgsMapToolZoom
 from os.path import basename,join
 from tools.CommonTool import show_info_message, show_question_message
 from lxml import etree
@@ -17,6 +18,7 @@ import traceback
 # XML文件的路径
 from menu.ContextMenu import CustomMenuProvider
 from menu.FeatureContextMenu import SelectToolWithMenu
+from tools.AttributeIdentifyMapTool import AttributeIdentifyMapTool
 from ui.MainWinUI import Ui_MainWindow
 
 class mainWin(QMainWindow, Ui_MainWindow):
@@ -48,6 +50,8 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.tocView.setModel(self.model)
         # 4 建立图层树与地图画布的桥接
         self.layerTreeBridge = QgsLayerTreeMapCanvasBridge(self.project.layerTreeRoot(),self.canvas,self)
+        # 关键修改：禁用自动范围调整
+        self.layerTreeBridge.setAutoSetupOnFirstLayer(False)  # 禁用首次加载时的自动范围
         # 5.0 样本管理栏(右)     
         self.sampleModel = QStandardItemModel() # 创建模型并设置数据
         self.sampleModel.setHorizontalHeaderLabels(["名称", "类别", "误差", "查准", "查全", "IOU", "路径", "编辑"])  # 设置列头标签       
@@ -64,7 +68,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.tocView.setMenuProvider(self.rightMenuProv)
 
         # 8.0 提前给予基本CRS
-        self.canvas.setDestinationCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
+        #self.canvas.setDestinationCrs(QgsCoordinateReferenceSystem("EPSG:4326"))
 
         # 8 状态栏控件
         # 状态栏
@@ -72,7 +76,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
         statusBar.setSizeGripEnabled(False)  # 禁用大小调整手柄       
         self.progress_bar = QLabel(self)# 创建用于显示处理进度的进度条  
         self.coordinate_label = QLabel('{:<40}'.format(''))# 创建用于显示坐标信息的标签  #x y 坐标状态   
-        self.crs_label = QLabel(f"坐标系: {self.canvas.mapSettings().destinationCrs().description()}")
+        self.crs_label = QLabel(f"坐标系: 未知")#self.canvas.mapSettings().destinationCrs().description()
         # 将进度条和标签添加到水平布局中
         layout = QHBoxLayout()
         layout.addWidget(self.progress_bar)
@@ -102,8 +106,8 @@ class mainWin(QMainWindow, Ui_MainWindow):
         # B 初始设置控件
         self.editTempLayer : QgsVectorLayer = None #初始编辑图层为None
         self.pan()# 设置默认功能 
-        self.initPrj = True
-        self.newProject()# 默认新建工程   
+        #self.initPrj = True
+        #self.newProject()# 默认新建工程   
         # 在初始化代码中添加（通常在主窗口初始化时）
         self.project.layersAdded.connect(self.project.setDirty)  # 添加图层时标记为已修改
         self.project.layerTreeRoot().visibilityChanged.connect(self.project.setDirty)
@@ -146,6 +150,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.actionDrawPolygon.triggered.connect(self.drawPolygon)
         self.actionSelectFeature.triggered.connect(self.selectFeature)
         self.actionClearSelection.triggered.connect(self.clearSelection)
+        self.actionFeatureIdentify.triggered.connect(self.featureIdentify)
         self.actionDeleteSample.triggered.connect(self.deleteSample)
         self.actionEvalSample.triggered.connect(self.evalSample)
         self.actionMakeSample.triggered.connect(self.makeSample)
@@ -194,9 +199,9 @@ class mainWin(QMainWindow, Ui_MainWindow):
         
         # 设置项目的CRS（可选）
         # 例如，使用WGS 84坐标系统
-        crs = QgsCoordinateReferenceSystem("EPSG:4326")
-        self.project.setCrs(crs)
-        self.canvas.setDestinationCrs(crs)
+        #crs = QgsCoordinateReferenceSystem("EPSG:4326")
+        #self.project.setCrs(crs)
+        #self.canvas.setDestinationCrs(crs)
 
         # 标记为新建项目（未保存）
         self.current_project_path = None
@@ -267,6 +272,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.project.write(path)
         self.setWindowTitle(f"{basename(path)} - {self.title}")
         self.project.setDirty(False)
+        self.recent_files.manager.add_recent_file(path)
         return True 
 
     # 打开影像
@@ -364,76 +370,75 @@ class mainWin(QMainWindow, Ui_MainWindow):
         if result == QDialog.Accepted:      
             import time
             time_start=time.time() 
-            spacingX = float(self.fishnetDialog.lineEdit_width.text())
-            spacingY = float(self.fishnetDialog.lineEdit_height.text())
-            from qgis.core import QgsVectorLayer, QgsFeature, QgsGeometry, QgsField, QgsFields,QgsVectorFileWriter
-            from qgis.PyQt.QtCore import QVariant
-            from qgis.core import edit   
-            # 转换为浮点数并创建QgsRectangle
-            xmin = float(self.fishnetDialog.lineEdit_left.text())
-            ymin = float(self.fishnetDialog.lineEdit_bottom.text())
-            xmax = float(self.fishnetDialog.lineEdit_right.text())
-            ymax = float(self.fishnetDialog.lineEdit_top.text())   
-            
-            # 创建内存图层
-            crs = self.fishnetDialog.layerlist[self.fishnetDialog.comboBox_dataList.currentIndex()].crs()  # 坐标参考系统
-            layer = QgsVectorLayer(f"Polygon?crs={crs}", "渔网", "memory")
-            provider = layer.dataProvider()
-            
-            # 添加字段        
+
+            output_path = self.fishnetDialog.lineEdit_output.text()
+            # 准备文件写入选项
+            options = QgsVectorFileWriter.SaveVectorOptions()
+            options.driverName = QgsVectorFileWriter.driverForExtension(output_path.split('.')[-1])
+            options.fileEncoding = 'UTF-8'
+             # 添加字段        
             fields = QgsFields()
             fields.append(QgsField("id", QVariant.Int))
             fields.append(QgsField("row", QVariant.Int))
             fields.append(QgsField("col", QVariant.Int))
-            provider.addAttributes(fields)
-            layer.updateFields()
-            
-            # 创建要素
-            with edit(layer):
-                feature_id = 0
-                for i in range(int((xmax - xmin) / spacingX)):
-                    for j in range(int((ymax - ymin) / spacingY)):
-                        x1 = xmin + i * spacingX
-                        x2 = x1 + spacingX
-                        y1 = ymin + j * spacingY
-                        y2 = y1 + spacingY
-                        
-                        rect = QgsRectangle(x1, y1, x2, y2)
-                        geom = QgsGeometry.fromRect(rect)
-                        
-                        feat = QgsFeature()
-                        feat.setGeometry(geom)
-                        feat.setAttributes([feature_id, j, i])
-                        provider.addFeature(feat)
-                        feature_id += 1
-            # 保存到文件
-            output_path = self.fishnetDialog.lineEdit_output.text()
-            options = QgsVectorFileWriter.SaveVectorOptions()
-            options.driverName = QgsVectorFileWriter.driverForExtension(output_path.split('.')[-1])
-            options.fileEncoding = 'UTF-8'
-            
-            transform_context = QgsProject.instance().transformContext()
-            error = QgsVectorFileWriter.writeAsVectorFormatV2(
-                layer,
+            # 直接创建文件写入器
+            transform_context = self.project.transformContext()
+            crs = self.fishnetDialog.layerlist[self.fishnetDialog.comboBox_dataList.currentIndex()].crs()  # 坐标参考系统
+            if crs.isValid():
+                print("CRS是有效的")
+            else:
+                print("CRS无效")
+                return
+            writer = QgsVectorFileWriter.create(
                 output_path,
+                fields,
+                QgsWkbTypes.Polygon,
+                crs,
                 transform_context,
                 options
             )
             
-            if error[0] == QgsVectorFileWriter.NoError:
-                print(f"成功保存到: {output_path}")
-                # 加载保存的文件到QGIS
-                saved_layer = QgsVectorLayer(output_path, "渔网(已保存)", "ogr")
-                if saved_layer.isValid():
-                    self.project.addMapLayer(saved_layer)
-                else:
-                    print("警告：保存的文件加载失败")
+            if writer.hasError() != QgsVectorFileWriter.NoError:
+                show_info_message(self, "错误", f"创建文件失败: {writer.errorMessage()}")
+                return
+            
+            spacingX = float(self.fishnetDialog.lineEdit_width.text())
+            spacingY = float(self.fishnetDialog.lineEdit_height.text())            
+            # 转换为浮点数并创建QgsRectangle
+            xmin = float(self.fishnetDialog.lineEdit_left.text())
+            ymin = float(self.fishnetDialog.lineEdit_bottom.text())
+            xmax = float(self.fishnetDialog.lineEdit_right.text())
+            ymax = float(self.fishnetDialog.lineEdit_top.text())                           
+            # 直接写入特征到文件
+            total_cols = int((xmax - xmin) / spacingX)
+            total_rows = int((ymax - ymin) / spacingY)
+            feature_id = 0
+            for i in range(total_cols):
+                for j in range(total_rows):
+                    x1 = xmin + i * spacingX
+                    x2 = x1 + spacingX
+                    y1 = ymin + j * spacingY
+                    y2 = y1 + spacingY
+                    
+                    rect = QgsRectangle(x1, y1, x2, y2)
+                    geom = QgsGeometry.fromRect(rect)
+                    
+                    feat = QgsFeature(fields)
+                    feat.setGeometry(geom)
+                    feat.setAttributes([feature_id, j, i])
+                    writer.addFeature(feat)
+                    feature_id += 1
+            del writer
+            # 加载创建的文件
+            saved_layer = QgsVectorLayer(output_path, basename(output_path))
+            if saved_layer.isValid():
+                QgsProject.instance().addMapLayer(saved_layer)
+                show_info_message(self, "完成", f"成功创建渔网，共{feature_id}个网格")
             else:
-                print(f"保存失败: {error[1]}")
+                show_info_message(self, "警告", "渔网创建成功但加载失败")
             
             time_end=time.time()
             print('time cost','%.2f'%((time_end-time_start)/60.0),'minutes') 
-            show_info_message(self, "信息", "创建渔网完成!")   
         elif result == QDialog.Rejected:
             print("User clicked Close or pressed Escape")
 
@@ -447,22 +452,12 @@ class mainWin(QMainWindow, Ui_MainWindow):
 
         if result == QDialog.Accepted:      
             import time
-            time_start=time.time() 
-            from qgis.core import QgsVectorLayer, QgsField, QgsFields,QgsVectorFileWriter
-            from qgis.PyQt.QtCore import QVariant 
-            
-            # 创建内存图层
-            crs = self.createShapeDialog.lineEdit_crs.text()  # 坐标参考系统
-            text = self.createShapeDialog.comboBox_featureType.currentText()
-            if text == '点':
-                featureType = "Point"
-            elif text == '线':
-                featureType = "Line"
-            else:
-                featureType = "Polygon"
-            layer = QgsVectorLayer(f"{featureType}?crs={crs}", "New_Shape", "memory")
-            provider = layer.dataProvider()
-            
+            time_start=time.time()  
+            # 准备文件写入选项 
+            output_path = self.createShapeDialog.lineEdit_output.text()
+            options = QgsVectorFileWriter.SaveVectorOptions()
+            options.driverName = QgsVectorFileWriter.driverForExtension(output_path.split('.')[-1])
+            options.fileEncoding = 'UTF-8'        
             # 添加字段
             fields = QgsFields()
             # 获取行列数
@@ -479,36 +474,39 @@ class mainWin(QMainWindow, Ui_MainWindow):
                     fields.append(QgsField(name, QVariant.Bool))
                 elif text == "字符串":
                     fields.append(QgsField(name, QVariant.String))
-            provider.addAttributes(fields)
-            layer.updateFields()          
-            # 保存到文件
-            output_path = self.createShapeDialog.lineEdit_output.text()
-            options = QgsVectorFileWriter.SaveVectorOptions()
-            options.driverName = QgsVectorFileWriter.driverForExtension(output_path.split('.')[-1])
-            options.fileEncoding = 'UTF-8'
-            
+            # 直接创建文件写入器
             transform_context = QgsProject.instance().transformContext()
-            error = QgsVectorFileWriter.writeAsVectorFormatV2(
-                layer,
+            crs = QgsCoordinateReferenceSystem(self.createShapeDialog.lineEdit_crs.text())# 坐标参考系统
+            text = self.createShapeDialog.comboBox_featureType.currentText()
+            if text == '点':
+                featureType = QgsWkbTypes.Point
+            elif text == '线':
+                featureType = QgsWkbTypes.Line
+            else:
+                featureType = QgsWkbTypes.Polygon
+            writer = QgsVectorFileWriter.create(
                 output_path,
+                fields,
+                featureType,
+                crs,
                 transform_context,
                 options
             )
             
-            if error[0] == QgsVectorFileWriter.NoError:
-                print(f"成功保存到: {output_path}")
-                # 加载保存的文件到QGIS
-                saved_layer = QgsVectorLayer(output_path, "New_Shape(已保存)", "ogr")
-                if saved_layer.isValid():
-                    self.project.addMapLayer(saved_layer)
-                else:
-                    print("警告：保存的文件加载失败")
+            if writer.hasError() != QgsVectorFileWriter.NoError:
+                show_info_message(self, "错误", f"创建文件失败: {writer.errorMessage()}")
+                return
+                      
+            del writer
+            # 加载创建的文件
+            saved_layer = QgsVectorLayer(output_path, basename(output_path))
+            if saved_layer.isValid():
+                QgsProject.instance().addMapLayer(saved_layer)
+                show_info_message(self, "完成", f"成功创建矢量文件：{output_path}")
             else:
-                print(f"保存失败: {error[1]}")
-            
+                show_info_message(self, "警告", "矢量文件创建成功但加载失败")                        
             time_end=time.time()
-            print('time cost','%.2f'%((time_end-time_start)/60.0),'minutes') 
-            show_info_message(self, "信息", "创建渔网完成!")   
+            print('time cost','%.2f'%((time_end-time_start)/60.0),'minutes')   
         elif result == QDialog.Rejected:
             print("User clicked Close or pressed Escape")
 
@@ -557,15 +555,13 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.canvas.setMapTool(self.polygonTool)
     
     # 选择要素
-    def selectFeature(self):
+    def selectFeature(self, checked): # 用户点击时触发，携带当前checked状态
         current_layer = self.tocView.currentLayer()
         if (not current_layer) or current_layer.type() != QgsMapLayer.VectorLayer:
-            show_info_message(self,'提示','未选中矢量图层！！！\n请在图层树中点击一个矢量图层！')
-            self.actionSelectFeature.setCheckable(False)
+            self.actionSelectFeature.setChecked(False) 
+            show_info_message(self,'提示','未选中矢量图层！！！\n请在图层树中点击一个矢量图层！')                     
             return
-        else:
-            self.actionSelectFeature.setCheckable(True)
-        if self.actionSelectFeature.isChecked():
+        if checked:
             if self.canvas.mapTool():
                 self.canvas.unsetMapTool(self.canvas.mapTool())        
             self.toolSelectFeature = SelectToolWithMenu(self.canvas, self)
@@ -575,7 +571,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
             self.canvas.setMapTool(self.toolSelectFeature)
         else:
             if self.canvas.mapTool():
-                self.canvas.unsetMapTool(self.canvas.mapTool())
+                self.canvas.unsetMapTool(self.canvas.mapTool())      
     # 选择要素用到的工具
     def selectToolIdentified(self,feature):
         layerTemp: QgsVectorLayer = self.tocView.currentLayer()
@@ -594,13 +590,31 @@ class mainWin(QMainWindow, Ui_MainWindow):
 
         if layerTemp and layerTemp.selectedFeatureCount() > 0:          
             self.actionClearSelection.setEnabled(True)  
-
+        
     # 清除选择
     def clearSelection(self):
         current_layer = self.tocView.currentLayer()
         current_layer.removeSelection()
         self.actionClearSelection.setEnabled(False)
 
+    # 属性信息
+    def featureIdentify(self,checked):
+        current_layer = self.tocView.currentLayer()
+        if (not current_layer) or current_layer.type() != QgsMapLayer.VectorLayer:
+            self.actionFeatureIdentify.setChecked(False) 
+            show_info_message(self,'提示','未选中矢量图层！！！\n请在图层树中点击一个矢量图层！')                     
+            return
+        if checked:
+            if self.canvas.mapTool():
+                self.canvas.unsetMapTool(self.canvas.mapTool())                   
+            self.toolFeatureIdentify = AttributeIdentifyMapTool(self.canvas,self)
+            self.toolFeatureIdentify.setAction(self.actionFeatureIdentify)
+            self.toolFeatureIdentify.featureIdentified.connect(self.selectToolIdentified)
+            self.toolFeatureIdentify.setLayer(current_layer)
+            self.canvas.setMapTool(self.toolFeatureIdentify)
+        else:
+            if self.canvas.mapTool():
+                self.canvas.unsetMapTool(self.canvas.mapTool()) 
     # 删除要素
     def deleteSample(self):
         if self.editTempLayer == None:
@@ -1443,35 +1457,34 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.firstAddLayer = False
     
     # 加载矢量数据
-    def addVector(self, path):
-        layer = QgsVectorLayer(path,basename(path))
+    def addVector(self, path):       
+        layer = QgsVectorLayer(path, basename(path))
         if not layer.isValid():
             show_info_message(self, '提示', '文件打开失败')
             return   
 
-        # 构造一个嵌入的渲染器
-        
-        fill_props = {}
-        fill_props["color"] = QColor(0, 0, 0, 0)
-        fill_props["color_border"] = 'red'
-        fill = QgsFillSymbol.createSimple(fill_props)
-        embededRenderer = QgsSingleSymbolRenderer(fill)
-
-        # 构造 QgsInvertedPolygonRenderer，并赋给多边形图层
-        renderer = QgsInvertedPolygonRenderer(embededRenderer)
-        layer.setRenderer(renderer)
+        # 设置默认渲染器（如果图层没有渲染器）
+        if not layer.renderer():
+            # 创建简单填充符号
+            symbol = QgsFillSymbol.createSimple({
+                'color': '255,0,0,128',
+                'color_border': 'red',
+                'width_border': '0.5'
+            })
+            layer.setRenderer(QgsSingleSymbolRenderer(symbol))
 
         if self.firstAddLayer:
             self.canvas.setDestinationCrs(layer.crs())
             self.canvas.setExtent(layer.extent())
-        #layer.dataProvider().setNoDataValue(1,0)
-        while(self.project.mapLayersByName(layer.name())):
-            layer.setName(layer.name()+"_1")
+        
+        # 确保图层名称唯一
+        while self.project.mapLayersByName(layer.name()):
+            layer.setName(layer.name() + "_1")
+        
         self.project.addMapLayer(layer)
         layers = [layer] + [self.project.mapLayer(i) for i in self.project.mapLayers()]
         self.canvas.setLayers(layers)
-
-        self.canvas.refresh()
+        self.canvas.refreshAllLayers()
         self.firstAddLayer = False
 
     # 加载qgis工程
@@ -1479,30 +1492,12 @@ class mainWin(QMainWindow, Ui_MainWindow):
         if not self.project.read(path):
             show_info_message(self, '错误', '项目文件加载失败！')
             return False
-        
         self.current_project_path = path
         self.setWindowTitle(f"{basename(path)} - {self.title}")
-        
+        #self.canvas.setDestinationCrs(self.project.crs())
         # 确保图层树桥接已正确设置
-        self.layerTreeBridge = QgsLayerTreeMapCanvasBridge(self.project.layerTreeRoot(), self.canvas, self)
-        
-        # 获取工程中的所有图层
-        layers = list(self.project.mapLayers().values())
-        
-        # 设置画布图层
-        if layers:
-            self.canvas.setLayers(layers)
-            
-            # 设置画布范围
-            full_extent = QgsRectangle()
-            for layer in layers:
-                if layer.extent().isNull():
-                    full_extent.combineExtentWith(layer.extent())
-            
-            if full_extent.isNull():
-                self.canvas.setExtent(full_extent)
-                self.canvas.refresh()
-        
+        #self.layerTreeBridge = QgsLayerTreeMapCanvasBridge(self.project.layerTreeRoot(), self.canvas, self)      
+        self.layerTreeBridge.setCanvasLayers()
         # 恢复视图范围（如果项目中有保存）
         extent_str = self.project.readEntry("ViewSettings", "LastExtent", "")[0]
         if extent_str:
@@ -1583,14 +1578,9 @@ class LayerTreeDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
         super().__init__(parent)
         # 预加载图标避免重复创建
-        from os.path import join
         from DeeplearningSystem import base_dir
         png = join(base_dir, 'settings/icon', 'Edit.png') 
         self.edit_icon = QIcon(png)
-        # 或者使用你的自定义图标路径
-        # from os.path import join
-        # from DeeplearningSystem import base_dir
-        # self.edit_icon = QIcon(join(base_dir, 'settings/icon', 'Edit.png'))
 
     def paint(self, painter, option, index):
         # 先让父类完成基础绘制

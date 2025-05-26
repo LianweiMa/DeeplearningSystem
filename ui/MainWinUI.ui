@@ -110,6 +110,7 @@
     <addaction name="actionDrawPolygon"/>
     <addaction name="actionSelectFeature"/>
     <addaction name="actionClearSelection"/>
+    <addaction name="actionFeatureIdentify"/>
     <addaction name="actionDeleteSample"/>
     <addaction name="separator"/>
     <addaction name="actionMakeSample"/>
@@ -209,6 +210,7 @@
    <addaction name="actionDrawPolygon"/>
    <addaction name="actionSelectFeature"/>
    <addaction name="actionClearSelection"/>
+   <addaction name="actionFeatureIdentify"/>
    <addaction name="actionDeleteSample"/>
    <addaction name="separator"/>
    <addaction name="actionMakeSample"/>
@@ -726,12 +728,27 @@
    </property>
   </action>
   <action name="actionSelectFeature">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
      <normaloff>:/icon/VectorEditor_SelectFeature.png.png</normaloff>:/icon/VectorEditor_SelectFeature.png.png</iconset>
    </property>
    <property name="text">
     <string>选择要素</string>
+   </property>
+  </action>
+  <action name="actionFeatureIdentify">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../settings/icon/DeepLearningSystem.qrc">
+     <normaloff>:/icon/FeatureIdentify.png</normaloff>:/icon/FeatureIdentify.png</iconset>
+   </property>
+   <property name="text">
+    <string>识别要素</string>
    </property>
   </action>
  </widget>

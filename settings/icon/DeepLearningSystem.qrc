@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icon">
+    <file>FeatureIdentify.png</file>
     <file>VectorEditor_DrawRectangleFeature.png</file>
     <file>Edit.png</file>
     <file>VectorEditor_ClearSelection.png</file>

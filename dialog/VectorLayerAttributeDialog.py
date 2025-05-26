@@ -20,7 +20,7 @@ class VectorLayerAttributeDialog(QDialog):
         self.setWindowTitle("属性表 - "+self.layer.name())
         vl = QHBoxLayout(self)
         self.tableView = QgsAttributeTableView(self)   
-        self.tableView.doubleClicked.connect(self.double_click)# 连接双击信号到槽函数
+        self.tableView.doubleClicked.connect(self.double_click)# 连接双击信号到槽函数  
         self.resize(800, 600)
         vl.addWidget(self.tableView)
         self.center()
@@ -48,6 +48,7 @@ class VectorLayerAttributeDialog(QDialog):
         #iface
         self.layerCache = QgsVectorLayerCache(self.layer, 10000)
         self.tableModel = QgsAttributeTableModel(self.layerCache)
+        self.tableView.selectionModel().selectionChanged.connect(self.selection_changed)
         self.tableModel.loadLayer()
 
         self.tableFilterModel = QgsAttributeTableFilterModel(self.mapCanvas, self.tableModel, parent=self.tableModel)
@@ -64,3 +65,6 @@ class VectorLayerAttributeDialog(QDialog):
         #feature = layer.getFeature(row)
         if not self.layer.isEditable():
             show_info_message(self.tableView, "信息", "如要编辑属性，请打开图层编辑状态！")
+
+    def selection_changed(self,selected, deselected):
+        self.mainWindows.actionClearSelection.setEnabled(False)
