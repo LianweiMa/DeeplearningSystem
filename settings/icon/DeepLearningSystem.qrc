@@ -1,20 +1,16 @@
 <RCC>
   <qresource prefix="icon">
+    <file>VectorEditor_SelectFeature.png</file>
     <file>FeatureIdentify.png</file>
     <file>VectorEditor_DrawRectangleFeature.png</file>
     <file>Edit.png</file>
     <file>VectorEditor_ClearSelection.png</file>
     <file>VectorEditor_CreateLayer.png</file>
-    <file>CartoGraphy_Pan.png</file>
-    <file>CartoGraphy_ZoomIn.png</file>
-    <file>CartoGraphy_ZoomOut.png</file>
-    <file>CartoGraphy_ZoomToWhole.png</file>
     <file>create_fishnet.png</file>
     <file>mainWindow2.png</file>
     <file>ImgClass_Post_Comb.png</file>
     <file>Segment.png</file>
     <file>net_update.png</file>
-    <file>SplitDataset1.png</file>
     <file>label_update.png</file>
     <file>label_eval.png</file>
     <file>label_create.png</file>
@@ -26,45 +22,19 @@
     <file>label_statistic.png</file>
     <file>net_delete.png</file>
     <file>net_import.png</file>
-    <file>HypHySime.png</file>
-    <file>Batch_TransformToDb.png</file>
-    <file>statistic.png</file>
-    <file>check.png</file>
     <file>DataLoader_Raster.png</file>
     <file>DataLoader_Vector.png</file>
     <file>down.png</file>
-    <file>ImgClass_Post_Clump.png</file>
-    <file>ImgClass_Post_Clump1.png</file>
-    <file>ImgClass_Post_Comb1.png</file>
-    <file>label_close.png</file>
-    <file>label_delete.png</file>
-    <file>label_import.png</file>
     <file>left.png</file>
-    <file>MainCategory_About.png</file>
     <file>MainCategory_DeleteAllSelect.png</file>
     <file>MainCategory_UserManual.png</file>
-    <file>mainWindow.ico</file>
-    <file>mainWindow.png</file>
-    <file>mainWindow1.ico</file>
-    <file>mainWindow1.png</file>
-    <file>mainWindow2.ico</file>
-    <file>MakeSample.png</file>
     <file>MapBrowser_FullExtent.png</file>
     <file>MapBrowser_Pan.png</file>
     <file>MapBrowser_SwipeLayer.png</file>
     <file>MapBrowser_ZoomIn.png</file>
     <file>MapBrowser_ZoomOut.png</file>
-    <file>MarkTool_DrawRectElement.png</file>
-    <file>MarkTool_SelectElement.png</file>
-    <file>parasSet.ico</file>
-    <file>Query.png</file>
     <file>right.png</file>
-    <file>Sample_Evalue.png</file>
-    <file>Segment(1).png</file>
     <file>Segment.png</file>
-    <file>Segment1.png</file>
-    <file>Segment2.png</file>
-    <file>Segment3.png</file>
     <file>split_h.png</file>
     <file>split_v.png</file>
     <file>SplitDataset.png</file>
@@ -84,6 +54,5 @@
     <file>VectorEditor_DeleteFeature.png</file>
     <file>VectorEditor_DrawPolygonFeature.png</file>
     <file>VectorEditor_Edit.png</file>
-    <file>VectorEditor_SelectFeature.png.png</file>
   </qresource>
 </RCC>

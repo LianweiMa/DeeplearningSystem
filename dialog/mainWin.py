@@ -587,15 +587,14 @@ class mainWin(QMainWindow, Ui_MainWindow):
                 if not ctrl_pressed:
                     layerTemp.removeSelection()
                 layerTemp.select(feature.id())
-
-        if layerTemp and layerTemp.selectedFeatureCount() > 0:          
-            self.actionClearSelection.setEnabled(True)  
         
     # 清除选择
     def clearSelection(self):
         current_layer = self.tocView.currentLayer()
+        if (not current_layer) or current_layer.type() != QgsMapLayer.VectorLayer:
+            show_info_message(self,'提示','未选中矢量图层！！！\n请在图层树中点击一个矢量图层！')                     
+            return
         current_layer.removeSelection()
-        self.actionClearSelection.setEnabled(False)
 
     # 属性信息
     def featureIdentify(self,checked):

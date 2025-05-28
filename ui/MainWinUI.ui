@@ -620,7 +620,7 @@
   <action name="actionSplitDataSet">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/SplitDataset1.png</normaloff>:/icon/SplitDataset1.png</iconset>
+     <normaloff>:/icon/SplitDataset.png</normaloff>:/icon/SplitDataset.png</iconset>
    </property>
    <property name="text">
     <string>划分数据集</string>
@@ -717,7 +717,7 @@
   </action>
   <action name="actionClearSelection">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
@@ -733,7 +733,7 @@
    </property>
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/VectorEditor_SelectFeature.png.png</normaloff>:/icon/VectorEditor_SelectFeature.png.png</iconset>
+     <normaloff>:/icon/VectorEditor_SelectFeature.png</normaloff>:/icon/VectorEditor_SelectFeature.png</iconset>
    </property>
    <property name="text">
     <string>选择要素</string>

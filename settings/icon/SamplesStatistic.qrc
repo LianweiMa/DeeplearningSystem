@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="icon">
+    <file>FieldCalculator.png</file>
     <file>AttributeQuery.png</file>
     <file>ClearSelection.png</file>
   </qresource>
