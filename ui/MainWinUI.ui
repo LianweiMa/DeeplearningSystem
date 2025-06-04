@@ -151,6 +151,7 @@
      <string>工具</string>
     </property>
     <addaction name="actionSplitDataSet"/>
+    <addaction name="separator"/>
     <addaction name="actionUpdateDatabase"/>
     <addaction name="actionUpdateModelsDB"/>
    </widget>
@@ -158,6 +159,7 @@
     <property name="title">
      <string>帮助</string>
     </property>
+    <addaction name="actionUserManual"/>
     <addaction name="actionAbout"/>
    </widget>
    <addaction name="fileMenu"/>
@@ -206,6 +208,9 @@
    <addaction name="actionFullExtent"/>
    <addaction name="actionSwipe"/>
    <addaction name="separator"/>
+   <addaction name="actionCreateFishnet"/>
+   <addaction name="actionCreateShape"/>
+   <addaction name="separator"/>
    <addaction name="actionEditSample"/>
    <addaction name="actionDrawPolygon"/>
    <addaction name="actionSelectFeature"/>
@@ -215,12 +220,12 @@
    <addaction name="separator"/>
    <addaction name="actionMakeSample"/>
    <addaction name="actionEvalSample"/>
-   <addaction name="actionQuerySample"/>
+   <addaction name="actionSampleStatistic"/>
    <addaction name="separator"/>
    <addaction name="actionImportSample"/>
    <addaction name="actionDeleteSamples"/>
+   <addaction name="actionQuerySample"/>
    <addaction name="actionCloseSamples"/>
-   <addaction name="actionSampleStatistic"/>
    <addaction name="separator"/>
    <addaction name="actionModelTrain"/>
    <addaction name="actionStopTrain"/>
@@ -238,9 +243,10 @@
    <addaction name="actionPostClump"/>
    <addaction name="actionRasterToVector"/>
    <addaction name="separator"/>
+   <addaction name="actionSplitDataSet"/>
+   <addaction name="separator"/>
    <addaction name="actionUpdateModelsDB"/>
    <addaction name="actionUpdateDatabase"/>
-   <addaction name="actionSplitDataSet"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget">
    <property name="minimumSize">
@@ -632,7 +638,7 @@
   <action name="actionAbout">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/MainCategory_UserManual.png</normaloff>:/icon/MainCategory_UserManual.png</iconset>
+     <normaloff>:/icon/About.png</normaloff>:/icon/About.png</iconset>
    </property>
    <property name="text">
     <string>关于</string>
@@ -703,7 +709,7 @@
      <normaloff>:/icon/create_fishnet.png</normaloff>:/icon/create_fishnet.png</iconset>
    </property>
    <property name="text">
-    <string>创建渔网</string>
+    <string>创建格网</string>
    </property>
   </action>
   <action name="actionCreateShape">
@@ -749,6 +755,15 @@
    </property>
    <property name="text">
     <string>识别要素</string>
+   </property>
+  </action>
+  <action name="actionUserManual">
+   <property name="icon">
+    <iconset resource="../settings/icon/DeepLearningSystem.qrc">
+     <normaloff>:/icon/UserManual.png</normaloff>:/icon/UserManual.png</iconset>
+   </property>
+   <property name="text">
+    <string>用户手册</string>
    </property>
   </action>
  </widget>

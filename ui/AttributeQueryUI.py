@@ -132,6 +132,6 @@ class Ui_Dialog(object):
         self.pushButton_BETWEEN.setText(_translate("Dialog", "BETWEEN"))
         self.groupBox_2.setTitle(_translate("Dialog", "属性值"))
         self.pushButton_GetValues.setText(_translate("Dialog", "获取唯一值"))
-        self.groupBox_3.setTitle(_translate("Dialog", "执行代码"))
+        self.groupBox_3.setTitle(_translate("Dialog", "表达式"))
         self.pushButton_Clear.setText(_translate("Dialog", "清除"))
         self.pushButton_Ok.setText(_translate("Dialog", "确定"))

@@ -59,8 +59,8 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "样本库统计表"))
-        self.toolButton_AttributeSelect.setToolTip(_translate("Dialog", "属性查询"))
-        self.toolButton_AttributeSelect.setText(_translate("Dialog", "属性查询"))
+        self.toolButton_AttributeSelect.setToolTip(_translate("Dialog", "属性选择"))
+        self.toolButton_AttributeSelect.setText(_translate("Dialog", "属性选择"))
         self.toolButton_ClearSelect.setToolTip(_translate("Dialog", "清除属性选择"))
         self.toolButton_ClearSelect.setText(_translate("Dialog", "..."))
 import SamplesStatistic_rc

@@ -92,7 +92,7 @@ class Ui_Dialog(object):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "数据集划分"))
         self.groupBox.setTitle(_translate("Dialog", "样本库选择："))
-        self.label.setText(_translate("Dialog", "样本库查询："))
+        self.label.setText(_translate("Dialog", "样本库类别："))
         self.pushButton_QuerySample.setText(_translate("Dialog", "查询"))
         self.groupBox_3.setTitle(_translate("Dialog", "样本库列表："))
         self.groupBox_2.setTitle(_translate("Dialog", "划分参数设置："))

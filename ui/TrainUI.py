@@ -146,7 +146,7 @@ class Ui_Dialog(object):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "模型训练"))
         self.groupBox_SelectSample.setTitle(_translate("Dialog", "样本库选择："))
-        self.label.setText(_translate("Dialog", "样本库查询："))
+        self.label.setText(_translate("Dialog", "样本库类别："))
         self.pushButton_QuerySample.setText(_translate("Dialog", "查询"))
         self.checkBox.setToolTip(_translate("Dialog", "全选"))
         self.label_7.setText(_translate("Dialog", "样本库列表："))

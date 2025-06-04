@@ -152,7 +152,7 @@
    <item>
     <widget class="QGroupBox" name="groupBox_3">
      <property name="title">
-      <string>执行代码</string>
+      <string>表达式</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>

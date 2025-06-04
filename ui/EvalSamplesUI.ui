@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>评估样本</string>
+   <string>样本评估</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_3">
    <item row="0" column="0">
@@ -73,7 +73,7 @@
                  </size>
                 </property>
                 <property name="text">
-                 <string>样本库查询：</string>
+                 <string>样本库类别：</string>
                 </property>
                </widget>
               </item>
@@ -187,7 +187,7 @@
        <item>
         <widget class="QGroupBox" name="groupBox_setPara">
          <property name="title">
-          <string>模型选择：</string>
+          <string>评估模型选择：</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>

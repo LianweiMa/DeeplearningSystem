@@ -126,13 +126,13 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "评估样本"))
+        Dialog.setWindowTitle(_translate("Dialog", "样本评估"))
         self.groupBox_SelectSample.setTitle(_translate("Dialog", "样本库选择："))
-        self.label.setText(_translate("Dialog", "样本库查询："))
+        self.label.setText(_translate("Dialog", "样本库类别："))
         self.pushButton_QuerySample.setText(_translate("Dialog", "查询"))
         self.checkBox.setToolTip(_translate("Dialog", "全选"))
         self.label_7.setText(_translate("Dialog", "样本库列表："))
-        self.groupBox_setPara.setTitle(_translate("Dialog", "模型选择："))
+        self.groupBox_setPara.setTitle(_translate("Dialog", "评估模型选择："))
         self.label_3.setText(_translate("Dialog", "选择模型："))
         self.label_4.setText(_translate("Dialog", "模型网络："))
         self.pushButton_QueryModel.setText(_translate("Dialog", "查询"))

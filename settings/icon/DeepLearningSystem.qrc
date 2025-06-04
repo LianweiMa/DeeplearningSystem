@@ -27,8 +27,9 @@
     <file>down.png</file>
     <file>left.png</file>
     <file>MainCategory_DeleteAllSelect.png</file>
-    <file>MainCategory_UserManual.png</file>
     <file>MapBrowser_FullExtent.png</file>
+    <file>About.png</file>
+    <file>UserManual.png</file>
     <file>MapBrowser_Pan.png</file>
     <file>MapBrowser_SwipeLayer.png</file>
     <file>MapBrowser_ZoomIn.png</file>

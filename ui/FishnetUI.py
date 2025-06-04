@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(505, 298)
+        Dialog.resize(505, 301)
         Dialog.setMinimumSize(QtCore.QSize(0, 0))
         Dialog.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(Dialog)
@@ -157,10 +157,10 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "创建渔网"))
+        Dialog.setWindowTitle(_translate("Dialog", "创建格网"))
         self.label_2.setText(_translate("Dialog", "输出路径："))
         self.pushButton_output.setText(_translate("Dialog", "浏览..."))
-        self.groupBox_selectModel.setTitle(_translate("Dialog", "范围选择："))
+        self.groupBox_selectModel.setTitle(_translate("Dialog", "输入范围："))
         self.label_4.setText(_translate("Dialog", "上"))
         self.label_3.setText(_translate("Dialog", "左"))
         self.label_9.setText(_translate("Dialog", "右"))

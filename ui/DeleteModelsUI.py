@@ -97,7 +97,7 @@ class Ui_Dialog(object):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "删除模型"))
         self.groupBox_SelectSample.setTitle(_translate("Dialog", "模型选择："))
-        self.label.setText(_translate("Dialog", "模型查询："))
+        self.label.setText(_translate("Dialog", "模型类别："))
         self.pushButton_Query.setText(_translate("Dialog", "查询"))
         self.checkBox.setToolTip(_translate("Dialog", "全选"))
         self.label_7.setText(_translate("Dialog", "模型列表："))

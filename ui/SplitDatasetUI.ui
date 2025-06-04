@@ -28,7 +28,7 @@
         <item>
          <widget class="QLabel" name="label">
           <property name="text">
-           <string>样本库查询：</string>
+           <string>样本库类别：</string>
           </property>
          </widget>
         </item>

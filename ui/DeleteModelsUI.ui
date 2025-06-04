@@ -73,7 +73,7 @@
                  </size>
                 </property>
                 <property name="text">
-                 <string>模型查询：</string>
+                 <string>模型类别：</string>
                 </property>
                </widget>
               </item>

@@ -115,7 +115,7 @@ class Ui_Dialog(object):
         Dialog.setWindowTitle(_translate("Dialog", "创建矢量"))
         self.label.setText(_translate("Dialog", "输出路径："))
         self.pushButton_output.setText(_translate("Dialog", "浏览..."))
-        self.label_2.setText(_translate("Dialog", "坐标系："))
+        self.label_2.setText(_translate("Dialog", "坐标系统："))
         self.pushButton_openCrs.setText(_translate("Dialog", "浏览..."))
         self.label_3.setText(_translate("Dialog", "要素类型："))
         self.groupBox.setTitle(_translate("Dialog", "字段设置："))

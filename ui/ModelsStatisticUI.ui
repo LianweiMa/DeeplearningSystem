@@ -22,10 +22,10 @@
      <item>
       <widget class="QToolButton" name="toolButton_AttributeSelect">
        <property name="toolTip">
-        <string>属性查询</string>
+        <string>属性选择</string>
        </property>
        <property name="text">
-        <string>属性查询</string>
+        <string>属性选择</string>
        </property>
        <property name="icon">
         <iconset resource="../settings/icon/SamplesStatistic.qrc">

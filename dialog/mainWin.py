@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QDialog,QMainWindow,QHBoxLayout,QFileDialog,QMessageBox,QLabel,QWidget,QApplication
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor, QIcon
-from PyQt5.QtCore import Qt, QMimeData, QVariant
+from PyQt5.QtWidgets import QDialog,QMainWindow,QHBoxLayout,QFileDialog,QMessageBox,QLabel,QWidget,QApplication,QTableView
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QDesktopServices, QIcon
+from PyQt5.QtCore import Qt, QMimeData, QVariant, QUrl
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery
 from qgis.core import (
     QgsLayerTreeLayer, QgsProject, QgsLayerTreeModel, QgsRasterLayer, 
@@ -10,7 +10,7 @@ from qgis.core import (
     QgsFeature, QgsGeometry, QgsField, QgsFields,QgsVectorFileWriter,QgsVectorFileWriter,edit,QgsWkbTypes
 )
 from qgis.gui import QgsMapCanvas, QgsLayerTreeView, QgsLayerTreeMapCanvasBridge, QgsMapToolPan, QgsMapToolZoom
-from os.path import basename,join
+from os.path import basename,join,exists
 from tools.CommonTool import show_info_message, show_question_message
 from lxml import etree
 import sys
@@ -19,6 +19,7 @@ import traceback
 from menu.ContextMenu import CustomMenuProvider
 from menu.FeatureContextMenu import SelectToolWithMenu
 from tools.AttributeIdentifyMapTool import AttributeIdentifyMapTool
+from tools.PolygonMapTool import PolygonMapTool
 from ui.MainWinUI import Ui_MainWindow
 
 class mainWin(QMainWindow, Ui_MainWindow):
@@ -57,7 +58,8 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.sampleModel.setHorizontalHeaderLabels(["名称", "类别", "误差", "查准", "查全", "IOU", "路径", "编辑"])  # 设置列头标签       
         self.tableView.setModel(self.sampleModel)# 创建表格视图
         self.tableView.resizeColumnsToContents()       
-        self.tableView.horizontalHeader().setSectionsClickable(True)# 设置 QTableView 的列头可排序      
+        self.tableView.horizontalHeader().setSectionsClickable(True)# 设置 QTableView 的列头可排序    
+        self.tableView.setEditTriggers(QTableView.NoEditTriggers)  
         # 5 初始加载影像
         self.firstAddLayer = True
         # 6 允许拖拽文件
@@ -177,6 +179,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.actionUpdateDatabase.triggered.connect(self.updateDatabase)
         self.actionUpdateModelsDB.triggered.connect(self.updateModelsDB)
 
+        self.actionUserManual.triggered.connect(self.userManual) 
         self.actionAbout.triggered.connect(self.about) 
         # 控件绑定事件
         self.canvas.xyCoordinates.connect(self.showXY)
@@ -277,14 +280,14 @@ class mainWin(QMainWindow, Ui_MainWindow):
 
     # 打开影像
     def openDialogRas(self):
-        path_to_tif,_ = QFileDialog.getOpenFileName(self, '打开', '', 'Raster Files (*.tif;*.tiff;*.img;*.dat);;All Files (*.*)')
+        path_to_tif,_ = QFileDialog.getOpenFileName(self, '打开影像', '', 'Raster Files (*.tif;*.tiff;*.img;*.dat);;All Files (*.*)')
         if  path_to_tif=="":# 如果用户取消了选择，则返回空字符串
             return
         self.addRaster(path_to_tif)
 
     # 打开矢量
     def openDialogVec(self):
-        path_to_vec, _ = QFileDialog.getOpenFileName(self, '打开', '', 'Vector Files (*.shp);;All Files (*.*)')
+        path_to_vec, _ = QFileDialog.getOpenFileName(self, '打开矢量', '', 'Vector Files (*.shp);;All Files (*.*)')
         if  path_to_vec=="":
             return
         self.addVector(path_to_vec)
@@ -345,6 +348,9 @@ class mainWin(QMainWindow, Ui_MainWindow):
                     self.actionSamplesView.setChecked(True)
     # 样本库面板双击事件
     def on_tableView_double_clicked(self, index):
+        for layer in self.project.mapLayers().values():
+            self.project.removeMapLayer(layer)
+        self.firstAddLayer = True
         row = index.row()
         name_index = index.sibling(row, 0)
         name = name_index.data()
@@ -524,7 +530,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
                 self.editTempLayer.rollBack()   
             self.canvas.refresh()
             self.pan()
-            self.actionEditSample.setEnabled(False)
+            #self.actionEditSample.setEnabled(False)
     # 激活“编辑矢量”功能
     def layerClicked(self):
         curLayer: QgsMapLayer = self.tocView.currentLayer()
@@ -544,8 +550,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
             self.actionEditSample.setChecked(False)
    
     # 画多边形
-    def drawPolygon(self):  
-        from tools.PolygonMapTool import PolygonMapTool
+    def drawPolygon(self):        
         if self.editTempLayer == None:
             show_info_message(self, '警告', '您没有编辑中的矢量！')
             return
@@ -1411,6 +1416,15 @@ class mainWin(QMainWindow, Ui_MainWindow):
         time_end=time.time() 
         self.progress_bar.setText(f"处理完成: 花费时间 {((time_end-time_start)/60.0):.2f} 分钟") 
 
+    # 用户手册
+    def userManual(self):
+        from DeeplearningSystem import base_dir
+        pdf_path = join(base_dir, 'help', '《遥感影像智能解译系统》用户手册20250529.pdf')
+        if exists(pdf_path):
+            QDesktopServices.openUrl(QUrl.fromLocalFile(pdf_path))
+        else:
+           show_info_message(self, "提示", "用户手册不存在！")
+
     # 关于
     def about(self):
         import json
@@ -1429,7 +1443,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
         user_id = license_data.get("user_id")
         expiration_date = license_data.get("expiration_date")
         info = f"软件信息：{self.title.split(' - ')[1] if self.title.find('-')>=0 else self.title}\n构建日期：2024-12-31\n版权所有：河南省地球物理空间信息研究院有限公司\n技术邮箱：malianwei2009@163.com\n许可截至：{expiration_date}"
-        show_info_message(self, "提示", info)
+        show_info_message(self, "关于我们", info)
     
     
     #############

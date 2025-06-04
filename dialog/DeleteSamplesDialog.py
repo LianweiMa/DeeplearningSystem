@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtWidgets import QDialog
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt
 from lxml import etree
 # XML文件的路径
@@ -65,6 +65,7 @@ class DeleteSamplesDialog(QDialog, Ui_Dialog):
             count = len(glob(f'{samplePath}/image/*.tif')) + len(glob(f'{samplePath}/image/*.tiff'))
             checkbox_item = QStandardItem()
             checkbox_item.setCheckable(True)
+            checkbox_item.setEditable(False)
             #checkbox_item.setCheckState(Qt.Unchecked)  # 可选：设置初始检查状态                               
             row = [QStandardItem(child.get('Name')), QStandardItem(child.get('Type')), QStandardItem(child.get('Size')), QStandardItem(str(count)),checkbox_item]
             self.sampleList.append(child.get('Name'))
