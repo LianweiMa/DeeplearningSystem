@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="icon">
+    <file>redo.png</file>
+    <file>undo.png</file>
     <file>VectorEditor_SelectFeature.png</file>
     <file>FeatureIdentify.png</file>
     <file>VectorEditor_DrawRectangleFeature.png</file>

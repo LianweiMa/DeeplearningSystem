@@ -113,6 +113,9 @@
     <addaction name="actionFeatureIdentify"/>
     <addaction name="actionDeleteSample"/>
     <addaction name="separator"/>
+    <addaction name="actionUndo"/>
+    <addaction name="actionRedo"/>
+    <addaction name="separator"/>
     <addaction name="actionMakeSample"/>
     <addaction name="actionEvalSample"/>
     <addaction name="actionSampleStatistic"/>
@@ -217,6 +220,9 @@
    <addaction name="actionClearSelection"/>
    <addaction name="actionFeatureIdentify"/>
    <addaction name="actionDeleteSample"/>
+   <addaction name="separator"/>
+   <addaction name="actionUndo"/>
+   <addaction name="actionRedo"/>
    <addaction name="separator"/>
    <addaction name="actionMakeSample"/>
    <addaction name="actionEvalSample"/>
@@ -764,6 +770,24 @@
    </property>
    <property name="text">
     <string>用户手册</string>
+   </property>
+  </action>
+  <action name="actionUndo">
+   <property name="icon">
+    <iconset resource="../settings/icon/DeepLearningSystem.qrc">
+     <normaloff>:/icon/undo.png</normaloff>:/icon/undo.png</iconset>
+   </property>
+   <property name="text">
+    <string>撤销</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="icon">
+    <iconset resource="../settings/icon/DeepLearningSystem.qrc">
+     <normaloff>:/icon/redo.png</normaloff>:/icon/redo.png</iconset>
+   </property>
+   <property name="text">
+    <string>恢复</string>
    </property>
   </action>
  </widget>

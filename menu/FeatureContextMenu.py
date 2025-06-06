@@ -1,6 +1,6 @@
-from qgis.core import edit, QgsProject, QgsVectorLayer, QgsMapLayer, QgsMapLayerType, QgsFeature, QgsCoordinateTransform, QgsGeometry,QgsVectorDataProvider,QgsWkbTypes
+from qgis.core import edit, QgsProject, QgsMapLayer, QgsFeature, QgsCoordinateTransform, QgsGeometry, QgsWkbTypes
 from qgis.gui import QgsMapToolIdentifyFeature, QgsRubberBand
-from PyQt5.QtWidgets import QAction, QMenu
+from PyQt5.QtWidgets import QAction, QMenu, QApplication
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QCursor, QColor
 from tools.CommonTool import show_info_message
@@ -26,40 +26,50 @@ class SelectToolWithMenu(QgsMapToolIdentifyFeature):
         self.moving_layer = None           # 正在平移的要素所在图层
         self.dragging = False  # 新增：跟踪是否正在拖动
         self._transform_cache = None  # 新增转换缓存
-        self._last_update_time = 0
+        self.is_hovering = False  # 是否悬停在选中要素上
         
     def canvasReleaseEvent(self, event):
+        layer = self.parent.tocView.currentLayer()
+        print(f"self.is_moving_features:{self.is_moving_features}")
+        print(f"self.dragging:{self.dragging}")
         # 如果在平移模式下释放鼠标
-        if self.is_moving_features and event.button() == Qt.LeftButton:
-            if self.dragging:  # 只有实际拖动后才完成移动               
-                try:
-                    # 转换为地图坐标偏移量
-                    current_map_point = self.toMapCoordinates(event.pos())
-                    last_map_point = self.toMapCoordinates(self.start_move_pos)
-                    
-                    map_dx = current_map_point.x() - last_map_point.x()
-                    map_dy = current_map_point.y() - last_map_point.y()
-                    
-                    with edit(self.moving_layer):
+        if event.button() == Qt.LeftButton:
+            if self.is_moving_features:
+                if self.dragging:  # 只有实际拖动后才完成移动               
+                    try:
+                        # 转换为地图坐标偏移量
+                        current_map_point = self.toMapCoordinates(event.pos())
+                        last_map_point = self.toMapCoordinates(self.start_move_pos)
+                        
+                        map_dx = current_map_point.x() - last_map_point.x()
+                        map_dy = current_map_point.y() - last_map_point.y()
+                        
+                        #with edit(self.moving_layer):
                         for feature in self.moving_features:
                             original_geom = self.original_geometries.get(feature.id())
                             if original_geom:
                                 new_geom = QgsGeometry(original_geom)
                                 if new_geom.translate(map_dx, map_dy) == 0:
                                     self.moving_layer.changeGeometry(feature.id(), new_geom)              
-                    self.canvas().refresh()                   
-                except Exception as e:
-                    print(f"移动要素时出错: {str(e)}")
-                    self.cancelMovingFeatures()
+                        self.canvas().refresh()                   
+                    except Exception as e:
+                        print(f"移动要素时出错: {str(e)}")
+                        self.cancelMovingFeatures()
 
-                self.finishMovingFeatures()
-            else:  # 如果只是点击没有拖动，则取消移动
-                self.cancelMovingFeatures()
-            self.dragging = False
-            return
+                    self.finishMovingFeatures()
+                else:  # 如果只是点击没有拖动，则取消移动
+                    self.cancelMovingFeatures()
+                self.dragging = False
+                return
+            # 获取键盘修饰键状态（判断Ctrl键是否按下）
+            modifiers = QApplication.keyboardModifiers()
+            ctrl_pressed = modifiers == Qt.ControlModifier
+            # 如果Ctrl键没有按下，先清除选择
+            if not ctrl_pressed:
+                layer.removeSelection()
+
         # 右键点击显示菜单
-        if event.button() == Qt.RightButton:
-            layer = self.parent.tocView.currentLayer()
+        if event.button() == Qt.RightButton:          
             if layer and layer.type() == QgsMapLayer.VectorLayer:
                 # 识别点击位置的所有要素
                 self.last_identified_features = self.identify(
@@ -74,21 +84,37 @@ class SelectToolWithMenu(QgsMapToolIdentifyFeature):
         super().canvasReleaseEvent(event)
     
     def canvasMoveEvent(self, event):
-        if self.is_moving_features and self.dragging:
-            self.moveFeatures(event.pos())
-            #current_time = time.time()
-            #if current_time - self._last_update_time > 0.05:  # 保持20FPS限制
-            #    self.moveFeatures(event.pos())
-            #    self._last_update_time = current_time
+        # 作用
+        # 1.处理光标状态，是否进入平移状态
+        # 2.显示平移效果
+        #print("canvasMoveEvent")        
+        # 1.处理光标状态，是否进入平移状态
+        layer = self.parent.tocView.currentLayer()
+        if layer and layer.type() == QgsMapLayer.VectorLayer and layer.selectedFeatureCount() > 0 and layer.isEditable():         
+            map_point = self.toMapCoordinates(event.pos())  # 转换鼠标位置到地图坐标                   
+            for feature in layer.selectedFeatures():  # 检查是否悬停在任何选中要素上
+                if feature.hasGeometry() and feature.geometry().contains(map_point):
+                    if not self.is_hovering:  # 如果之前不是悬停状态
+                        self.setCursor(self.move_cursor)
+                        self.is_hovering = True
+                    return             
+        if self.is_hovering: # 如果没有悬停在要素上，恢复默认光标
+            self.setCursor(self.cursor if not self.is_moving_features else self.move_cursor)
+            self.is_hovering = False
+        # 2.显示平移效果
+        if self.is_moving_features: # and self.dragging
+            self.moveFeatures(event.pos()) # 显示平移效果
             return
+        
         super().canvasMoveEvent(event)
 
-    def canvasPressEvent(self, event):
+    def canvasPressEvent(self, event):      
         if event.button() == Qt.LeftButton:
             layer = self.parent.tocView.currentLayer()
             if layer and layer.type() == QgsMapLayer.VectorLayer:
                 # 检查是否已有选中要素
-                if layer.selectedFeatureCount() > 0:
+                print(f"self.is_hovering:{self.is_hovering}")
+                if self.is_hovering and layer.selectedFeatureCount() > 0:
                     self.startMovingFeatures()
                     self.dragging = True
                     self.start_move_pos = event.pos()
@@ -156,7 +182,7 @@ class SelectToolWithMenu(QgsMapToolIdentifyFeature):
             menu.addAction(paste_action)
         
         # 删除功能（当有选中要素时）
-        if layer and layer.selectedFeatureCount() > 0:
+        if layer and layer.selectedFeatureCount() > 0 and layer.isEditable():
             menu.addSeparator()
             delete_action = QAction("删除选中要素", menu)
             delete_action.triggered.connect(self.deleteSelectedFeatures)
@@ -371,8 +397,7 @@ class SelectToolWithMenu(QgsMapToolIdentifyFeature):
         """删除选中的要素"""
         layer = self.parent.tocView.currentLayer()
         if layer and layer.type() == QgsMapLayer.VectorLayer:
-            with edit(layer):
-                layer.deleteSelectedFeatures()
+            layer.deleteSelectedFeatures()
             layer.removeSelection()
             self.canvas().refresh()
     
@@ -381,3 +406,4 @@ class SelectToolWithMenu(QgsMapToolIdentifyFeature):
         layer = self.parent.tocView.currentLayer()
         if layer and layer.selectedFeatureCount() > 0:
             self.canvas().zoomToSelected(layer)
+            

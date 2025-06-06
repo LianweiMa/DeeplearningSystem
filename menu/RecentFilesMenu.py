@@ -55,7 +55,7 @@ class RecentFilesMenu:
         # 检查工程是否要保存
         if self.main_window.project.isDirty():
             print("工程有未保存的修改")
-            savePrj = show_question_message(self, '提示', "是否保存对当前工程的更改？")
+            savePrj = show_question_message(self.main_window, '打开工程', "是否保存对当前工程的更改？")
             if savePrj == QMessageBox.Yes:
                 self.main_window.saveProject()
         
@@ -66,7 +66,7 @@ class RecentFilesMenu:
             title = self.main_window.title
             self.main_window.setWindowTitle(f"{os.path.basename(path).split('.')[0]} - {title.split(' - ')[1] if title.find('-')>=0 else title}")
         else:
-            show_info_message(self.main_window, "错误", f"无法加载工程: {path}")
+            show_info_message(self.main_window, "打开工程", f"无法加载工程: {path}")
 
 
 class RecentFilesManager(QObject):

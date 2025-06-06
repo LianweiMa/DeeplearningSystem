@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QDialog,QMainWindow,QHBoxLayout,QFileDialog,QMessageBox,QLabel,QWidget,QApplication,QTableView
+from PyQt5.QtWidgets import QDialog,QMainWindow,QHBoxLayout,QFileDialog,QMessageBox,QLabel,QWidget,QApplication,QTableView,QStyledItemDelegate
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QDesktopServices, QIcon
-from PyQt5.QtCore import Qt, QMimeData, QVariant, QUrl
+from PyQt5.QtCore import Qt, QMimeData, QVariant, QUrl, QRect
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery
 from qgis.core import (
     QgsLayerTreeLayer, QgsProject, QgsLayerTreeModel, QgsRasterLayer, 
@@ -11,11 +11,10 @@ from qgis.core import (
 )
 from qgis.gui import QgsMapCanvas, QgsLayerTreeView, QgsLayerTreeMapCanvasBridge, QgsMapToolPan, QgsMapToolZoom
 from os.path import basename,join,exists
-from tools.CommonTool import show_info_message, show_question_message
+from tools.CommonTool import show_info_message, show_question_message, show_question_message2
 from lxml import etree
 import sys
 import traceback
-# XML文件的路径
 from menu.ContextMenu import CustomMenuProvider
 from menu.FeatureContextMenu import SelectToolWithMenu
 from tools.AttributeIdentifyMapTool import AttributeIdentifyMapTool
@@ -106,7 +105,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.connectFunc()
 
         # B 初始设置控件
-        self.editTempLayer : QgsVectorLayer = None #初始编辑图层为None
+        #self.editTempLayer : QgsVectorLayer = None #初始编辑图层为None
         self.pan()# 设置默认功能 
         #self.initPrj = True
         #self.newProject()# 默认新建工程   
@@ -122,7 +121,24 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.copied_features = None  # 存储复制的要素列表
         self.copied_layer = None     # 存储要素来源图层
         self.copied_crs = None       # 存储要素的原始坐标系
-    
+
+        self.drag = False
+        self.setMouseTracking(True)  # 启用主窗口鼠标追踪
+        self.centralWidget().setMouseTracking(True)  # 启用中央部件的鼠标追踪
+
+    # 重写关闭事件
+    def closeEvent(self, event):
+        if self.project.isDirty():
+            print("工程有未保存的修改")
+            savePrj = show_question_message2(self, '保存工程', "是否保存对当前工程的更改？")
+            if savePrj == QMessageBox.Save:
+                self.saveProject()
+                event.accept()  # 允许关闭窗口
+            elif savePrj == QMessageBox.Discard:
+                event.ignore()  # 阻止关闭窗口
+            elif savePrj == QMessageBox.Cancel:
+                event.accept()  # 允许关闭窗口
+
     # 连接工程变化信号
     def on_project_dirty(self):
         print("工程已修改")
@@ -137,6 +153,8 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.actionSaveAsProject.triggered.connect(self.saveAsProject)
         self.actionOpenRas.triggered.connect(self.openDialogRas)
         self.actionOpenVec.triggered.connect(self.openDialogVec)
+        self.actionUndo.triggered.connect(self.undo)
+        self.actionRedo.triggered.connect(self.redo)
 
         self.actionZoomIn.triggered.connect(self.zoomIn)
         self.actionZoomOut.triggered.connect(self.zoomOut)
@@ -192,40 +210,27 @@ class mainWin(QMainWindow, Ui_MainWindow):
       
     # 新建工程
     def newProject(self):
+        try:
+            self.canvas.extentsChanged.disconnect(self.on_project_dirty)
+        except TypeError:
+            pass  # 忽略未连接的异常
         if self.project.isDirty():
             print("工程有未保存的修改")
-            savePrj = show_question_message(self, '提示', "是否保存对当前工程的更改？")
+            savePrj = show_question_message(self, '保存工程', "是否保存对当前工程的更改？")
             if savePrj == QMessageBox.Yes:
                 self.saveProject()
 
-        self.project.clear()  # 清除当前项目中的所有内容（如果有的话）
-        
-        # 设置项目的CRS（可选）
-        # 例如，使用WGS 84坐标系统
-        #crs = QgsCoordinateReferenceSystem("EPSG:4326")
-        #self.project.setCrs(crs)
-        #self.canvas.setDestinationCrs(crs)
-
+        self.project.clear()  # 清除当前项目中的所有内容（如果有的话）  
         # 标记为新建项目（未保存）
         self.current_project_path = None
         self.setWindowTitle(f"未命名项目 - {self.title}")
-        self.project.setDirty(False)  # 新建项目初始状态为未修改
-        
-        # 保存新项目到文件（例如：new_project.qgs）
-        '''
-        from DeeplearningSystem import base_dir
-        project_path = join(base_dir, 'temp', 'new_project.qgs')
-        self.project.writeEntry("qgis", "/projectTitle", "New Project")  # 设置项目标题（可选）
-        self.project.setFileName(project_path)
-        self.project.write()     
-        self.setWindowTitle(f"new_project - {self.title.split(' - ')[1] if self.title.find('-')>=0 else self.title}") 
-        '''
+        self.project.setDirty(False)  # 新建项目初始状态为未修改      
     
     # 打开工程
-    def openProject(self):      
+    def openProject(self):             
         # 检查是否需要保存当前项目
         if self.project.isDirty():
-            choice = show_question_message(self, '提示', "是否保存对当前工程的更改？")
+            choice = show_question_message(self, '保存工程', "是否保存对当前工程的更改？")
             if choice == QMessageBox.Yes:
                 self.saveProject()
         
@@ -238,12 +243,17 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.closeProject()
         self.addProject(path)
         self.recent_files.manager.add_recent_file(path)
+        
 
     # 关闭工程
     def closeProject(self):
+        try:
+            self.canvas.extentsChanged.disconnect(self.on_project_dirty)
+        except TypeError:
+            pass  # 忽略未连接的异常
         """仅关闭当前项目，不自动新建"""
         if self.project.isDirty():
-            choice = show_question_message(self, '提示', "是否保存对当前工程的更改？")
+            choice = show_question_message(self, '保存工程', "是否保存对当前工程的更改？")
             if choice == QMessageBox.Yes:
                 self.saveProject()
         
@@ -254,6 +264,10 @@ class mainWin(QMainWindow, Ui_MainWindow):
 
     # 保存工程
     def saveProject(self):
+        try:
+            self.canvas.extentsChanged.disconnect(self.on_project_dirty)
+        except TypeError:
+            pass  # 忽略未连接的异常
         # 如果是未保存的新项目，转为另存为
         if not self.current_project_path:
             return self.saveAsProject()
@@ -261,11 +275,15 @@ class mainWin(QMainWindow, Ui_MainWindow):
         # 保存当前状态
         self._saveProjectSettings()
         self.project.write()
-        self.setWindowTitle(f"{basename(self.current_project_path)} - {self.title}")
-        self.project.setDirty(False)
+        self.setWindowTitle(f"{basename(self.current_project_path).rsplit('.', 1)[0]} - {self.title}")
+        self.canvas.extentsChanged.connect(self.on_project_dirty)
 
     # 另存工程
     def saveAsProject(self):
+        try:
+            self.canvas.extentsChanged.disconnect(self.on_project_dirty)
+        except TypeError:
+            pass  # 忽略未连接的异常
         path, _ = QFileDialog.getSaveFileName(self, '另存工程', '', 'QGIS项目文件 (*.qgs)')
         if not path:
             return False
@@ -273,8 +291,8 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.current_project_path = path
         self._saveProjectSettings()
         self.project.write(path)
-        self.setWindowTitle(f"{basename(path)} - {self.title}")
-        self.project.setDirty(False)
+        self.setWindowTitle(f"{basename(path).rsplit('.', 1)[0]} - {self.title}")
+        self.canvas.extentsChanged.connect(self.on_project_dirty)
         self.recent_files.manager.add_recent_file(path)
         return True 
 
@@ -291,6 +309,28 @@ class mainWin(QMainWindow, Ui_MainWindow):
         if  path_to_vec=="":
             return
         self.addVector(path_to_vec)
+
+    # 撤销
+    def undo(self):
+        current_layer = self.tocView.currentLayer() 
+        if (not current_layer) or current_layer.type() != QgsMapLayer.VectorLayer:
+            show_info_message(self,'撤销','未选中矢量图层！！！\n请在图层树中单击选择一个矢量图层！')                     
+            return       
+        if not current_layer.isEditable():
+            show_info_message(self, '撤销', f'您选中的矢量图层【{current_layer.name()}】未开启编辑状态！')
+            return
+        current_layer.undoStack().undo()
+
+    # 恢复
+    def redo(self):
+        current_layer = self.tocView.currentLayer() 
+        if (not current_layer) or current_layer.type() != QgsMapLayer.VectorLayer:
+            show_info_message(self,'恢复','未选中矢量图层！！！\n请在图层树中单击选择一个矢量图层！')                     
+            return       
+        if not current_layer.isEditable():
+            show_info_message(self, '恢复', f'您选中的矢量图层【{current_layer.name()}】未开启编辑状态！')
+            return
+        current_layer.undoStack().redo()
 
     # 视图放大         
     def zoomIn(self):
@@ -518,16 +558,20 @@ class mainWin(QMainWindow, Ui_MainWindow):
 
     # 编辑矢量
     def editSample(self):
+        current_layer = self.tocView.currentLayer() 
         if self.actionEditSample.isChecked():
             self.editTempLayer : QgsVectorLayer = self.tocView.currentLayer()
-            self.editTempLayer.startEditing()
+            #self.editTempLayer.startEditing()
+            current_layer.startEditing()
         else:
-            saveShpEdit = show_question_message(self, '保存编辑', "确定要将编辑内容保存到内存吗？")
-            self.editTempLayer : QgsVectorLayer = self.tocView.currentLayer()
+            saveShpEdit = show_question_message(self, '编辑矢量', "确定要将编辑内容保存到内存吗？")
+            #self.editTempLayer : QgsVectorLayer = self.tocView.currentLayer()
             if saveShpEdit == QMessageBox.Yes:
-                self.editTempLayer.commitChanges()
+                #self.editTempLayer.commitChanges()
+                current_layer.commitChanges()
             else:
-                self.editTempLayer.rollBack()   
+                #self.editTempLayer.rollBack()  
+                current_layer.rollBack() 
             self.canvas.refresh()
             self.pan()
             #self.actionEditSample.setEnabled(False)
@@ -550,13 +594,17 @@ class mainWin(QMainWindow, Ui_MainWindow):
             self.actionEditSample.setChecked(False)
    
     # 画多边形
-    def drawPolygon(self):        
-        if self.editTempLayer == None:
-            show_info_message(self, '警告', '您没有编辑中的矢量！')
+    def drawPolygon(self):
+        current_layer = self.tocView.currentLayer() 
+        if (not current_layer) or current_layer.type() != QgsMapLayer.VectorLayer:
+            show_info_message(self,'画多边形','未选中矢量图层！！！\n请在图层树中单击选择一个矢量图层！')                     
+            return       
+        if not current_layer.isEditable():
+            show_info_message(self, '画多边形', f'您选中的矢量图层【{current_layer.name()}】未开启编辑状态！')
             return
         if self.canvas.mapTool():
             self.canvas.mapTool().deactivate()
-        self.polygonTool = PolygonMapTool(self.canvas, self.editTempLayer, self)
+        self.polygonTool = PolygonMapTool(self.canvas, current_layer, self)#self.editTempLayer
         self.canvas.setMapTool(self.polygonTool)
     
     # 选择要素
@@ -597,7 +645,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
     def clearSelection(self):
         current_layer = self.tocView.currentLayer()
         if (not current_layer) or current_layer.type() != QgsMapLayer.VectorLayer:
-            show_info_message(self,'提示','未选中矢量图层！！！\n请在图层树中点击一个矢量图层！')                     
+            show_info_message(self,'清除选择','未选中矢量图层！！！\n请在图层树中单击选择一个矢量图层！')                     
             return
         current_layer.removeSelection()
 
@@ -621,13 +669,21 @@ class mainWin(QMainWindow, Ui_MainWindow):
                 self.canvas.unsetMapTool(self.canvas.mapTool()) 
     # 删除要素
     def deleteSample(self):
-        if self.editTempLayer == None:
-            show_info_message(self, '警告', '您没有编辑中矢量')
+        current_layer = self.tocView.currentLayer() 
+        if (not current_layer) or current_layer.type() != QgsMapLayer.VectorLayer:
+            show_info_message(self,'删除要素','未选中矢量图层！！！\n请在图层树中单击选择一个矢量图层！')                     
+            return       
+        if not current_layer.isEditable():
+            show_info_message(self, '删除要素', f'您选中的矢量图层【{current_layer.name()}】未开启编辑状态！')
             return
-        if len(self.editTempLayer.selectedFeatureIds()) == 0:
-            show_info_message(self, '删除选中矢量', '您没有选择任何矢量')
+        #if self.editTempLayer == None:
+        #    show_info_message(self, '警告', '您没有编辑中矢量')
+        #    return
+        if len(current_layer.selectedFeatureIds()) == 0: #self.editTempLayer
+            show_info_message(self, '删除要素', '您没有选中任何要素！')
         else:
-            self.editTempLayer.deleteSelectedFeatures()
+            #self.editTempLayer.deleteSelectedFeatures()
+            current_layer.deleteSelectedFeatures()
 
     # 样本制作
     def makeSample(self):
@@ -1501,12 +1557,17 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.firstAddLayer = False
 
     # 加载qgis工程
-    def addProject(self, path):               
+    def addProject(self, path):   
+        try:
+            self.canvas.extentsChanged.disconnect(self.on_project_dirty)
+        except TypeError:
+            pass  # 忽略未连接的异常
+                    
         if not self.project.read(path):
             show_info_message(self, '错误', '项目文件加载失败！')
             return False
         self.current_project_path = path
-        self.setWindowTitle(f"{basename(path)} - {self.title}")
+        self.setWindowTitle(f"{basename(path).rsplit('.', 1)[0]} - {self.title}")
         #self.canvas.setDestinationCrs(self.project.crs())
         # 确保图层树桥接已正确设置
         #self.layerTreeBridge = QgsLayerTreeMapCanvasBridge(self.project.layerTreeRoot(), self.canvas, self)      
@@ -1515,7 +1576,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
         extent_str = self.project.readEntry("ViewSettings", "LastExtent", "")[0]
         if extent_str:
             self._restoreExtent(extent_str)
-
+        self.canvas.extentsChanged.connect(self.on_project_dirty)
         return True      
               
     def _saveProjectSettings(self):
@@ -1586,7 +1647,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
         QMessageBox.about(self, 'error', traceback_string)
         self.old_hook(ty, value, trace)
 
-from PyQt5.QtWidgets import QStyledItemDelegate
+# 实现矢量图层开启编辑状态后，在图层树上显示“笔”标记
 class LayerTreeDelegate(QStyledItemDelegate):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -1594,6 +1655,7 @@ class LayerTreeDelegate(QStyledItemDelegate):
         from DeeplearningSystem import base_dir
         png = join(base_dir, 'settings/icon', 'Edit.png') 
         self.edit_icon = QIcon(png)
+        self.icon_size = 16
 
     def paint(self, painter, option, index):
         # 先让父类完成基础绘制
@@ -1618,14 +1680,12 @@ class LayerTreeDelegate(QStyledItemDelegate):
                 painter.save()
                 
                 # 设置绘制区域
-                icon_size = 16
-                icon_rect = option.rect.adjusted(
-                    option.rect.width() - icon_size - 2, 
-                    (option.rect.height() - icon_size) // 2,
-                    -2, 
-                    0
+                icon_rect = QRect(
+                    option.rect.left() + 22,  # 左侧留22px边距
+                    option.rect.top() + (option.rect.height() - self.icon_size) // 2,
+                    self.icon_size,
+                    self.icon_size
                 )
-                
                 # 绘制图标
                 self.edit_icon.paint(
                     painter, 
