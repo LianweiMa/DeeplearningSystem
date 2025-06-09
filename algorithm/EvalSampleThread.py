@@ -2,11 +2,12 @@ from qgis.PyQt.QtCore import QThread, pyqtSignal
  
 class EvalSampleThread(QThread):
     finished = pyqtSignal(object)  # 用于将数据从子线程发送到主线程的信号
+    # 添加信号
+    progress_signal = pyqtSignal(str)
 
-    def __init__(self, ui, progress_bar):
+    def __init__(self, ui):
         super().__init__()
         self.ui = ui
-        self.progress_bar = progress_bar
 
     def run(self):
         # 在这里执行耗时任务，并使用self.param
@@ -19,18 +20,14 @@ class EvalSampleThread(QThread):
         from osgeo import gdal
         import torch
         import torch.nn as nn
-        import argparse
         from glob import glob
-        from os.path import basename,dirname,split
-        from algorithm.train.tools import one_hot,score_score,score
-        import shutil
-        import os,sys
-        from os import environ
+        from os.path import basename
+        from algorithm.train.tools import one_hot,score
+        import os
         import geopandas as gpd
-        environ['PROJ_LIB'] = dirname(sys.argv[0])+'/proj'
        
         time_start=time.time()
-        self.progress_bar.setText('开始处理...')
+        self.progress_signal.emit('开始处理...')
         # 是否使用cuda
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")    
         # para
@@ -114,7 +111,7 @@ class EvalSampleThread(QThread):
             num_features = len(gdf)
             # 遍历 'Name' 字段并将值复制到 'NewField'
             for index2, row in gdf.iterrows():
-                self.progress_bar.setText(f"开始处理{index1+1}/{count}: {int((index2+1) * 100 / num_features)}%")
+                self.progress_signal.emit(f"开始处理{index1+1}/{count}: {int((index2+1) * 100 / num_features)}%")
                 name = row['Name']                       
 
                 img = f'{samplePath}image/{name}.tif'
@@ -183,5 +180,5 @@ class EvalSampleThread(QThread):
             # 将修改后的 GeoDataFrame 保存回原始文件（覆盖原文件）
             gdf.to_file(range_file)
         time_end=time.time()    
-        print('time cost','%.2f'%((time_end-time_start)/60.0),'minutes')     
-        self.progress_bar.setText(f"处理完成: 花费时间 {((time_end-time_start)/60.0):.2f} 分钟")           
+        print('time cost','%.2f'%((time_end-time_start)/60.0),'minutes')      
+        self.progress_signal.emit(f"处理完成: 花费时间 {((time_end-time_start)/60.0):.2f} 分钟")       

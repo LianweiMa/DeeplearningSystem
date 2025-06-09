@@ -1,14 +1,12 @@
 from qgis.PyQt.QtCore import QThread, pyqtSignal
 from xml.dom import minidom
 
-
 class QuerySampleThread(QThread):
     finished = pyqtSignal(object)  # 用于将数据从子线程发送到主线程的信号
-
-    def __init__(self, ui, progress_bar):
+    
+    def __init__(self, ui):
         super().__init__()
         self.ui = ui
-        self.progress_bar = progress_bar
 
     def run(self):
         # 在这里执行耗时任务，并使用self.param

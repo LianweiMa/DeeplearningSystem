@@ -12,7 +12,6 @@ from qgis.core import QgsApplication
 from qgis.PyQt.QtCore import Qt,QTranslator
 import datetime,json
 from cryptography.fernet import Fernet
-#from mainWin import mainWindow as mainWin
 from dialog.mainWin import mainWin
 from os.path import dirname,join
 from os import environ

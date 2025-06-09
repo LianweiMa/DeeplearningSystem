@@ -2,11 +2,11 @@ from qgis.PyQt.QtCore import QThread, pyqtSignal
  
 class RasterToVectorThread(QThread):
     finished = pyqtSignal(object)  # 用于将数据从子线程发送到主线程的信号
-
-    def __init__(self, ui, progress_bar):
+    # 添加信号
+    progress_signal = pyqtSignal(str)
+    def __init__(self, ui):
         super().__init__()
-        self.ui = ui
-        self.progress_bar = progress_bar
+        self.ui = ui      
 
     def run(self):
         # 在这里执行耗时任务，并使用self.param
@@ -14,31 +14,11 @@ class RasterToVectorThread(QThread):
         self.finished.emit(result)  # 发送信号，并将结果作为参数传递
 
     def do_work(self):
-        '''
-        import time
-        import sys
-        sys.path.append(r'C:\Program Files\QGIS 3.30.0\apps\qgis\python\plugins')
-        sys.path.append(r'C:\Program Files\QGIS 3.30.0\apps\Python39\Scripts')
-        import processing
-        from processing.core.Processing import Processing
-        Processing.initialize()
-        
-        time_start=time.time()
-        self.progress_bar.setText('开始处理...')
-        result = processing.run("gdal:polygonize", {
-            'INPUT': self.ui.comboBox_openImage.currentText(), 
-            'BAND':1,
-            'EIGHT_CONNECTEDNESS': False,
-            'OUTPUT': self.ui.lineEdit_saveVector.text()})
-        time_end=time.time()
-        self.progress_bar.setText(f'完成处理：花费时间 {((time_end-time_start)/60.0):.2f} 分钟')
-        return result
-        '''
         import time
         from osgeo import gdal,ogr,osr
         gdal.UseExceptions()
         time_start=time.time()
-        self.progress_bar.setText('开始处理...')
+        self.progress_signal.emit('开始处理...')
         inputfile = self.ui.comboBox_openImage.currentText()
         ds = gdal.Open(inputfile, gdal.GA_ReadOnly)
         srcband=ds.GetRasterBand(1)
@@ -61,11 +41,11 @@ class RasterToVectorThread(QThread):
         ds.Close()
         dst_ds = None
         time_end=time.time()
-        self.progress_bar.setText(f'完成处理：花费时间 {((time_end-time_start)/60.0):.2f} 分钟')
+        self.progress_signal.emit(f'完成处理：花费时间 {((time_end-time_start)/60.0):.2f} 分钟')
         return dst_filename
     
 def progress_callback(pct, message, v3):
     """进度条回调函数"""        
     progress = int(pct * 100)
     print(f"\rProgress: {progress}%: {message}", end="")
-    v3.progress_bar.setText(f"开始处理: {int(pct * 100)}%")
+    v3.progress_signal.emit(f"开始处理: {int(pct * 100)}%")

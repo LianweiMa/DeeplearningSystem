@@ -3,11 +3,12 @@ from qgis.PyQt.QtCore import QThread, pyqtSignal
 class PostClumpThread(QThread):
 
     finished = pyqtSignal(object)  # 用于将数据从子线程发送到主线程的信号
+    # 添加信号
+    progress_signal = pyqtSignal(str)
 
-    def __init__(self, ui, progress_bar, toolDrawRect):
+    def __init__(self, ui, toolDrawRect):
         super().__init__()
         self.ui = ui
-        self.progress_bar = progress_bar
         self.toolDrawRect = toolDrawRect
 
     def run(self):
@@ -22,15 +23,14 @@ class PostClumpThread(QThread):
         import numpy as np
         import time
         from osgeo import gdal
-        from tqdm import tqdm      
-        from os import environ
+        from tqdm import tqdm
         import cv2
         from os.path import splitext,basename,isfile
         from os import mkdir
         from glob import glob
-        environ['PROJ_LIB'] = '.settings/proj/'
+
         time_start=time.time()
-        self.progress_bar.setText('开始处理...')    
+        self.progress_signal.emit('开始处理...') 
         #index color
         colorTable=gdal.ColorTable()
         background = (0,0,0,255)
@@ -151,12 +151,12 @@ class PostClumpThread(QThread):
                 startX = startX_r
                 startY = endY + 1
                 # 更新状态栏
-                self.progress_bar.setText(f"开始处理: {int((y+1) * 100 / intervalHeightNums)}%")           
+                self.progress_signal.emit(f"开始处理: {int((y+1) * 100 / intervalHeightNums)}%")        
             outputimage = None
             y_test = None
         
         time_end=time.time()
-        self.progress_bar.setText(f'完成处理：花费时间 {((time_end-time_start)/60.0):.2f} 分钟')
+        self.progress_signal.emit(f'完成处理：花费时间 {((time_end-time_start)/60.0):.2f} 分钟')
         return output_img_path
 
 

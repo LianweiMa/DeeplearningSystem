@@ -2,11 +2,11 @@ from qgis.PyQt.QtCore import QThread, pyqtSignal
  
 class PredictThread(QThread):
     finished = pyqtSignal(object)  # 用于将数据从子线程发送到主线程的信号
-
-    def __init__(self, ui, progress_bar, toolDrawRect):
+    # 添加信号
+    progress_signal = pyqtSignal(str)
+    def __init__(self, ui, toolDrawRect):
         super().__init__()
         self.ui = ui
-        self.progress_bar = progress_bar
         self.toolDrawRect = toolDrawRect
 
     def run(self):
@@ -26,10 +26,9 @@ class PredictThread(QThread):
         from glob import glob
         from os.path import splitext,basename,isfile
         from os import mkdir
-        from os import environ
-        environ['PROJ_LIB'] = '.settings/proj/'
+      
         time_start=time.time()
-        self.progress_bar.setText('开始处理...')
+        self.progress_signal.emit('开始处理...')
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if (self.ui.comboBox_modelNet.currentText() == 'AUNet'):
             from net.AU_Net import AttU_Net
@@ -197,8 +196,7 @@ class PredictThread(QThread):
                 startY = endY + 1
                 # 更新状态栏
                 #将进度信息设置到状态栏
-                #wx.CallAfter(self.UpdateStatusBar, y, intervalHeightNums)
-                self.progress_bar.setText(f"开始处理: {int((y+1) * 100 / intervalHeightNums)}%")
+                self.progress_signal.emit(f"开始处理: {int((y+1) * 100 / intervalHeightNums)}%")
             if new_imgdatas is not None:
                 pre_img = torch.from_numpy(new_imgdatas)# numpy中的ndarray转化成pytorch中的tensor
                 pre_img = pre_img.to(device=device, dtype=torch.float32)
@@ -218,7 +216,7 @@ class PredictThread(QThread):
             y_test = None
         
         time_end=time.time()
-        self.progress_bar.setText(f'完成处理：花费时间 {((time_end-time_start)/60.0):.2f} 分钟')
+        self.progress_signal.emit(f'完成处理：花费时间 {((time_end-time_start)/60.0):.2f} 分钟')
         return output_img
     
     def write_array(self,endX, startX, endY, startY, intervalX, intervalY, width, height, pred, padding, outputimage):

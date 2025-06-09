@@ -3,11 +3,12 @@ from qgis.PyQt.QtCore import QThread, pyqtSignal
 class TrainThread(QThread):
     finished = pyqtSignal(object)  # 用于将数据从子线程发送到主线程的信号
     msg = pyqtSignal(object)
+    # 添加信号
+    progress_signal = pyqtSignal(str)
 
-    def __init__(self, ui, progress_bar):
+    def __init__(self, ui):
         super().__init__()
         self.ui = ui
-        self.progress_bar = progress_bar
         self.running = True
 
     def run(self):
@@ -36,7 +37,8 @@ class TrainThread(QThread):
         from algorithm.train.tools import one_hot, score
 
         time_start = time.time()
-        self.progress_bar.setText('训练初始化...')
+        #self.progress_bar.setText('训练初始化...')
+        self.progress_signal.emit('训练初始化...')
         logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
         info = f'Star time: {datetime.datetime.now()}'
         logging.info(info)
@@ -95,7 +97,8 @@ class TrainThread(QThread):
             for epoch in range(epochs):
                 if self.running==False:
                     break
-                self.progress_bar.setText(f"开始训练: {int((epoch + 1) * 100 / epochs)}%")
+                #self.progress_bar.setText(f"开始训练: {int((epoch + 1) * 100 / epochs)}%")
+                self.progress_signal.emit(f"开始训练: {int((epoch + 1) * 100 / epochs)}%")
                 net.train()
                 train_loss = []
                 train_acc = []
@@ -170,7 +173,8 @@ class TrainThread(QThread):
             info = f'完成训练：花费时间 {((time_end-time_start)/60.0):.2f} 分钟'
             logging.info(info)
             self.msg.emit(info)
-            self.progress_bar.setText(info)
+            #self.progress_bar.setText(info)
+            self.progress_signal.emit(info)
             info = f'End time: {datetime.datetime.now()}'
             logging.info(info)
             self.msg.emit(info)

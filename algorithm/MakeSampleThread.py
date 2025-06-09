@@ -2,11 +2,12 @@ from qgis.PyQt.QtCore import QThread, pyqtSignal
  
 class MakeSampleThread(QThread):
     finished = pyqtSignal(object)  # 用于将数据从子线程发送到主线程的信号
+    # 添加信号
+    progress_signal = pyqtSignal(str)
 
-    def __init__(self, ui, progress_bar):
+    def __init__(self, ui):
         super().__init__()
         self.ui = ui
-        self.progress_bar = progress_bar
 
     def run(self):
         # 在这里执行耗时任务，并使用self.param
@@ -22,7 +23,7 @@ class MakeSampleThread(QThread):
         from os.path import exists
         time_start=time.time()
 
-        self.progress_bar.setText('开始处理...')
+        self.progress_signal.emit('开始处理...')
         image_file = self.ui.lineEdit_image.text()
         label_file = self.ui.lineEdit_label.text()
         boundaryfile = self.ui.lineEdit_boundary.text()
@@ -72,7 +73,7 @@ class MakeSampleThread(QThread):
 
         # 遍历每个要素
         for index,feature in enumerate(layer):
-            self.progress_bar.setText(f"开始处理: {int((index+1) * 100 / feature_count)}%")
+            self.progress_signal.emit(f"开始处理: {int((index+1) * 100 / feature_count)}%")
             # 确定输出文件名
             feature_name  = feature.GetField("Name")
             range_file = f'{samplePath}/vector/{feature_name}_range.shp'
@@ -214,5 +215,5 @@ class MakeSampleThread(QThread):
 
         #print(f"处理完成！")
         time_end = time.time()
-        self.progress_bar.setText(f"处理完成: 花费时间 {((time_end-time_start)/60.0):.2f} 分钟") 
+        self.progress_signal.emit(f"处理完成: 花费时间 {((time_end-time_start)/60.0):.2f} 分钟")
         return sampleClass,samplePath              
