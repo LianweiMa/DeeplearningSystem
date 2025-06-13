@@ -113,20 +113,6 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
-           <widget class="QLineEdit" name="lineEdit_labelType">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="3">
-           <widget class="QLineEdit" name="lineEdit_labelSize">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
           <item row="1" column="2">
            <widget class="QLabel" name="label_5">
             <property name="text">
@@ -143,9 +129,6 @@
              <string>分辨率：</string>
             </property>
            </widget>
-          </item>
-          <item row="0" column="5">
-           <widget class="QLineEdit" name="lineEdit_labelGSD"/>
           </item>
           <item row="0" column="0">
            <widget class="QLabel" name="label_6">
@@ -190,8 +173,17 @@
             </property>
            </widget>
           </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="comboBox_labelType"/>
+          </item>
+          <item row="0" column="3">
+           <widget class="QComboBox" name="comboBox_labelSize"/>
+          </item>
+          <item row="0" column="5">
+           <widget class="QComboBox" name="comboBox_labelGSD"/>
+          </item>
           <item row="2" column="1">
-           <widget class="QLineEdit" name="lineEdit_Class"/>
+           <widget class="QComboBox" name="comboBox_class"/>
           </item>
          </layout>
         </item>

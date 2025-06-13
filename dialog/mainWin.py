@@ -20,6 +20,7 @@ from menu.ContextMenu import CustomMenuProvider
 from menu.FeatureContextMenu import SelectToolWithMenu
 from tools.AttributeIdentifyMapTool import AttributeIdentifyMapTool
 from tools.PolygonMapTool import PolygonMapTool
+from tools.RectangleMapTool import RectangleMapTool
 from ui.MainWinUI import Ui_MainWindow
 
 class mainWin(QMainWindow, Ui_MainWindow):
@@ -107,7 +108,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
 
         # B 初始设置控件
         self.pan()# 设置默认功能 
-        #self.initPrj = True
+        self.current_project_path = None
         #self.newProject()# 默认新建工程   
         # 在初始化代码中添加（通常在主窗口初始化时）
         self.project.layersAdded.connect(self.project.setDirty)  # 添加图层时标记为已修改
@@ -116,6 +117,9 @@ class mainWin(QMainWindow, Ui_MainWindow):
         # 初始化最近文件菜单
         from menu.RecentFilesMenu import RecentFilesMenu
         self.recent_files = RecentFilesMenu(self)
+        # 初始化矩形工具
+        self.toolDrawRect = RectangleMapTool(self.canvas)
+        self.toolDrawRect.setAction(self.actionDrawRect)
 
         # C 添加以下成员变量
         self.threads = []  # 用于管理所有线程
@@ -430,9 +434,14 @@ class mainWin(QMainWindow, Ui_MainWindow):
             options.fileEncoding = 'UTF-8'
              # 添加字段        
             fields = QgsFields()
-            fields.append(QgsField("id", QVariant.Int))
-            fields.append(QgsField("row", QVariant.Int))
-            fields.append(QgsField("col", QVariant.Int))
+            fields.append(QgsField("Id", QVariant.Int))
+            fields.append(QgsField("Name", QVariant.String))
+            fields.append(QgsField("Bz", QVariant.String))
+            fields.append(QgsField("Loss", QVariant.Double))
+            fields.append(QgsField("Acc", QVariant.Double))
+            fields.append(QgsField("Recall", QVariant.Double))
+            fields.append(QgsField("Iou", QVariant.Double))
+            fields.append(QgsField("Path", QVariant.String))
             # 直接创建文件写入器
             transform_context = self.project.transformContext()
             crs = self.fishnetDialog.layerlist[self.fishnetDialog.comboBox_dataList.currentIndex()].crs()  # 坐标参考系统
@@ -477,7 +486,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
                     
                     feat = QgsFeature(fields)
                     feat.setGeometry(geom)
-                    feat.setAttributes([feature_id, j, i])
+                    feat.setAttributes([feature_id])
                     writer.addFeature(feat)
                     feature_id += 1
             del writer
@@ -704,6 +713,10 @@ class mainWin(QMainWindow, Ui_MainWindow):
         makeSample = show_question_message(self, '样本制作', f"需要将已制作完成的样本入库吗？")
         if makeSample == QMessageBox.Yes:
             self.importSample()
+            flag = show_question_message(self, '样本制作', f"入库的样本需要执行以下两步，现在要执行吗？\n1.数据集划分\n2.样本评估")
+            if flag == QMessageBox.Yes:
+                self.splitDataSet()
+                self.evalSample()
 
     # 样本评估
     def evalSample(self):
@@ -743,6 +756,17 @@ class mainWin(QMainWindow, Ui_MainWindow):
         result = self.importSampleDialog.exec_()
 
         if result == QDialog.Accepted:
+            Type = self.importSampleDialog.comboBox_labelType.currentText()
+            Size = self.importSampleDialog.comboBox_labelSize.currentText()
+            GSD = self.importSampleDialog.comboBox_labelGSD.currentText()
+            Acc = self.importSampleDialog.lineEdit_labelAcc.text()
+            Recall = self.importSampleDialog.lineEdit_labelRecall.text()
+            IOU = self.importSampleDialog.lineEdit_labelIOU.text()
+            Name = self.importSampleDialog.lineEdit_labelName.text()
+            ValSetNums = self.importSampleDialog.lineEdit_labelValNums.text()
+            Class = self.importSampleDialog.comboBox_class.currentText()
+            Path = self.importSampleDialog.lineEdit_SamplesPath.text()
+
             parser = etree.XMLParser(remove_blank_text=True)  # 移除空白文本节点
             # XML文件的路径
             from DeeplearningSystem import sample_cofing_path
@@ -750,26 +774,39 @@ class mainWin(QMainWindow, Ui_MainWindow):
             tree = etree.parse(sample_cofing_path, parser)
         
             # 查找特定ID的节点
-            nodes = tree.xpath(f'//SamplePath[@Name="{self.importSampleDialog.lineEdit_labelName.text()}"]')
+            nodes = tree.xpath(f'//SamplePath[@Name="{Name}"]')
             if not nodes:
-                node1 = tree.xpath(f'//SampleClass[@EnglishName="{self.importSampleDialog.lineEdit_Class.text()}"]')[0]
-                print(f'self.importSampleDialog.lineEdit_labelValNums.text()={self.importSampleDialog.lineEdit_labelValNums.text()}')
+                node1 = tree.xpath(f'//SampleClass[@EnglishName="{Class}"]')[0]
                 # 创建新节点
                 new_node = etree.SubElement(node1, 'SamplePath', 
-                                            attrib={'Type': self.importSampleDialog.lineEdit_labelType.text(),
-                                                    'Size': self.importSampleDialog.lineEdit_labelSize.text(),
-                                                    'GSD': self.importSampleDialog.lineEdit_labelGSD.text(),
-                                                    'Acc': self.importSampleDialog.lineEdit_labelAcc.text(),
-                                                    'Recall': self.importSampleDialog.lineEdit_labelRecall.text(),
-                                                    'IOU': self.importSampleDialog.lineEdit_labelIOU.text(),
-                                                    'Name': self.importSampleDialog.lineEdit_labelName.text(),
-                                                    'ValSetNums': self.importSampleDialog.lineEdit_labelValNums.text()
-                                                    }).text = self.importSampleDialog.lineEdit_SamplesPath.text()+"/"
+                                            attrib={'Type': Type,
+                                                    'Size': Size,
+                                                    'GSD': GSD,
+                                                    'Acc': Acc,
+                                                    'Recall': Recall,
+                                                    'IOU': IOU,
+                                                    'Name': Name,
+                                                    'ValSetNums': ValSetNums
+                                                    }).text = Path +"/"
+                rangefile = Path+'/SamplesRange.shp'
+                import geopandas as gpd
+                # 读取矢量文件
+                gdf = gpd.read_file(rangefile)
+                gdf['Path'] = Path
+                # 将修改后的 GeoDataFrame 保存回原始文件（覆盖原文件）
+                gdf.to_file(rangefile)
             else:
                 node = nodes[0]
                 saveSample = show_question_message(self, '样本导入', "存在相同的样本，确定要导入吗？\n如果导入，将会覆盖！")
                 if saveSample == QMessageBox.Yes:
-                    node.text = self.importSampleDialog.lineEdit_SamplesPath.text()+"/"  # 更新文本内容
+                    node.attrib['Type'] = Type
+                    node.attrib['Size'] = Size
+                    node.attrib['GSD'] = GSD
+                    node.attrib['Acc'] = Acc
+                    node.attrib['Recall'] = Recall
+                    node.attrib['IOU'] = IOU
+                    node.attrib['ValSetNums'] = ValSetNums
+                    node.text = Path +"/"  # 更新文本内容
                 else:
                     return
             # 保存修改
@@ -777,8 +814,9 @@ class mainWin(QMainWindow, Ui_MainWindow):
                     encoding='utf-8', 
                     xml_declaration=True, 
                     pretty_print=True)   
-            self.updateDatabase()
-            show_info_message(self, "样本导入", "样本导入完成!")   
+            updateDB = show_question_message(self, '样本导入', "样本导入完成!\n需要更新样本数据库吗？")
+            if updateDB == QMessageBox.Yes:
+                self.updateDatabase()  
         elif result == QDialog.Rejected:
             print("User clicked Close or pressed Escape")
     
@@ -830,7 +868,6 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.querySampleDialog = QuerySamplesDialog()
         # 显示对话框
         result = self.querySampleDialog.exec_()
-
         if result == QDialog.Accepted:
             # 启动子线程
             from algorithm.QuerySampleThread import QuerySampleThread
@@ -864,6 +901,8 @@ class mainWin(QMainWindow, Ui_MainWindow):
 
                 # 获取输入图层的几何类型和字段定义
                 feature_count = layer.GetFeatureCount()
+                layer_defn = layer.GetLayerDefn()
+                fields =  [layer_defn.GetFieldDefn(i).GetName() for i in range(layer_defn.GetFieldCount())]
                 # 减少UI更新频率
                 update_interval = max(1, feature_count // 10)  # 最多更新100次
                 # 遍历每个要素
@@ -872,13 +911,34 @@ class mainWin(QMainWindow, Ui_MainWindow):
                         progress = int((index2 + 1) * 100 / feature_count)
                         self.progress_bar.setText(f"正在处理({index1 + 1}/{count}): {progress}%")              
                     # 确定输出文件名
-                    name  = feature.GetField("Name")
-                    type = feature.GetField("Bz")
-                    loss = feature.GetField("Loss")
-                    acc = feature.GetField("Acc")
-                    recall = feature.GetField("Recall")
-                    iou = feature.GetField("Iou")
-                    path = feature.GetField("Path")
+                    if "Name" in fields:
+                        name  = feature.GetField("Name")
+                    else:
+                        name = "None"
+                    if "Bz" in fields:
+                        type = feature.GetField("Bz")
+                    else:
+                        type = "None"
+                    if "Loss" in fields:
+                        loss = feature.GetField("Loss")
+                    else:
+                        loss = "None"
+                    if "Acc" in fields:
+                        acc = feature.GetField("Acc")
+                    else:
+                        acc = "None"
+                    if "Recall" in fields:
+                        recall = feature.GetField("Recall")
+                    else:
+                        recall = "None"
+                    if "Iou" in fields:
+                        iou = feature.GetField("Iou")
+                    else:
+                        iou = "None"
+                    if "Path" in fields:
+                        path = feature.GetField("Path")
+                    else:
+                        path = "None"
                     checkbox_item = QStandardItem()
                     checkbox_item.setCheckable(True)
                     #checkbox_item.setCheckState(Qt.Unchecked)  # 可选：设置初始检查状态                               
@@ -1077,10 +1137,7 @@ class mainWin(QMainWindow, Ui_MainWindow):
         self.modelsStatisticDialog.show()
 
     # 画矩形     
-    def drawRect(self):  
-        from tools.RectangleMapTool import RectangleMapTool
-        self.toolDrawRect = RectangleMapTool(self.canvas)
-        self.toolDrawRect.setAction(self.actionDrawRect)
+    def drawRect(self):         
         self.canvas.setMapTool(self.toolDrawRect)
         self.actionClearDraw.setEnabled(True)
 
@@ -1110,9 +1167,11 @@ class mainWin(QMainWindow, Ui_MainWindow):
     # 地物提取后事件
     def on_segment_finished(self, result):
         self.remove_thread(self.thread_predict)
-        show_info_message(self.segmentDialog, '地物提取', f"提取完成！")
+        isOpen = show_question_message(self.segmentDialog, '地物提取', "提取完成！\n是否打开提取结果？")
+        if isOpen == QMessageBox.Yes:
+            self.addRaster(result)
         self.progress_bar.setText("")
-        self.addRaster(result)
+        #self.addRaster(result)
 
     # 聚类-分类后处理
     def postClump(self):
@@ -1134,9 +1193,10 @@ class mainWin(QMainWindow, Ui_MainWindow):
     def on_postclump_finished(self, result):
         #print(result)  # 在主线程中处理结果
         self.remove_thread(self.thread_postClump)
-        show_info_message(self.postprocessDialog, '聚类', f"聚类完成！")
+        isOpen = show_question_message(self.segmentDialog, '聚类', "聚类完成！\n是否打开聚类结果？")
+        if isOpen == QMessageBox.Yes:
+            self.addRaster(result)
         self.progress_bar.setText("")
-        self.addRaster(result)
 
     # 栅格转矢量
     def rasterToVector(self):
@@ -1157,9 +1217,10 @@ class mainWin(QMainWindow, Ui_MainWindow):
     # 栅格转矢量后事件
     def on_rasterToVector_finished(self, result):
         self.remove_thread(self.thread_rasterToVector)
-        show_info_message( self.rasterToVectorDialog, '栅格转矢量', f"栅格转矢量完成！")
+        isOpen = show_question_message(self.segmentDialog, '栅格转矢量', "栅格转矢量完成！\n是否打开栅格转矢量结果？")
+        if isOpen == QMessageBox.Yes:
+            self.addVector(result)
         self.progress_bar.setText("")
-        self.addVector(result)
 
     # 数据集划分-成训练集和验证集
     def splitDataSet(self):
@@ -1181,13 +1242,13 @@ class mainWin(QMainWindow, Ui_MainWindow):
             import shutil 
             from osgeo import ogr
             time_start=time.time() 
-            trainsetNums = int(self.ui_splitDataset.lineEdit_trainset.text())
-            valsetNums = int(self.ui_splitDataset.lineEdit_valset.text())
-            testsetNums = int(self.ui_splitDataset.lineEdit_testset.text())          
+            trainsetNums = int(self.splitDataSetDialog.lineEdit_trainset.text())
+            valsetNums = int(self.splitDataSetDialog.lineEdit_valset.text())
+            testsetNums = int(self.splitDataSetDialog.lineEdit_testset.text())          
             column_index = 4  # 假设复选框项在第三列（索引为4）
-            for row_index in range(self.ui_splitDataset.model.rowCount()):                  
-                check_state = self.ui_splitDataset.model.item(row_index, column_index).checkState()
-                samplepath = self.ui_splitDataset.sampleList[row_index]
+            for row_index in range(self.splitDataSetDialog.model.rowCount()):                  
+                check_state = self.splitDataSetDialog.model.item(row_index, column_index).checkState()
+                samplepath = self.splitDataSetDialog.sampleList[row_index]
                 if check_state == Qt.Checked:
                     samplerange_file = samplepath + 'SamplesRange.shp'                
                     split_path = dirname(dirname(samplepath)) + '/split/'
@@ -1264,8 +1325,9 @@ class mainWin(QMainWindow, Ui_MainWindow):
             """初始化数据库连接"""
             connection_name = "samples_conn"  # 使用唯一连接名
             db_samples = QSqlDatabase.addDatabase("QSQLITE", connection_name)
-            #db_samples = QSqlDatabase.addDatabase("QSQLITE")
-            db_samples.setDatabaseName("databae_samples.db")  # SQLite数据库文件
+            from DeeplearningSystem import base_dir
+            dbs = join(base_dir, 'settings/db', 'databae_samples.db') 
+            db_samples.setDatabaseName(dbs)  # SQLite数据库文件
             
             if not db_samples.open():
                 show_info_message(self, "更新样本数据库", "无法连接数据库")
@@ -1322,16 +1384,25 @@ class mainWin(QMainWindow, Ui_MainWindow):
                 self.progress_bar.setText(f"开始处理: {int((index+1) * 100 / len(nodes))}%")
                 Name = node.get('Name')
                 s = Name.split('_')
+                l = len(s)
                 Class = node.getparent().get('Name')
-                Country1 = s[1][:4]
-                Country2 = s[3]
-                Type = s[0]
-                Time = s[2]
+                if l == 5:                    
+                    Country1 = s[1][:4]
+                    Country2 = s[3]
+                    Type = s[0]
+                    Time = s[2]
+                    BZ = s[4]
+                else:
+                    Country1 = None
+                    Country2 = None
+                    Type = None
+                    Time = None
+                    BZ = None
                 GSD = node.get('GSD')
                 samplePath = node.text
                 count = len(glob(f'{samplePath}image/*.tif')) + len(glob(f'{samplePath}image/*.tiff'))
                 sum += count
-                BZ = s[4]
+                
                 trainset_file = dirname(dirname(samplePath))+'/split/train_set.txt'
                 if exists(trainset_file):
                     with open(trainset_file,"r") as f:
@@ -1377,11 +1448,13 @@ class mainWin(QMainWindow, Ui_MainWindow):
         finally:
             if db_samples and db_samples.isOpen():
                 db_samples.close()
+            del query, db_samples
             # 确保移除连接
             if connection_name in QSqlDatabase.connectionNames():
                 QSqlDatabase.removeDatabase(connection_name)
         time_end=time.time() 
         show_info_message(self,"更新样本数据库",f"处理完成: 花费时间 {((time_end-time_start)/60.0):.2f} 分钟") 
+        self.progress_bar.setText("")
 
     # 更新模型数据库
     def updateModelsDB(self):
@@ -1390,7 +1463,9 @@ class mainWin(QMainWindow, Ui_MainWindow):
         """初始化数据库连接"""
         connection_name = "connection_updateModelsDB"  # 自定义连接名称
         db_models = QSqlDatabase.addDatabase("QSQLITE",connection_name)
-        db_models.setDatabaseName("databae_models.db")  # SQLite数据库文件
+        from DeeplearningSystem import base_dir
+        dbs = join(base_dir, 'settings/db', 'databae_models.db') 
+        db_models.setDatabaseName(dbs)  # SQLite数据库文件
         
         if not db_models.open():
             show_info_message(self, "更新模型数据库", "无法连接数据库")
@@ -1471,10 +1546,12 @@ class mainWin(QMainWindow, Ui_MainWindow):
         if not db_models.commit():
             print("提交失败:", db_models.lastError().text()) 
         db_models.close()
+        del query, db_models
         QSqlDatabase.removeDatabase(connection_name)  # 移除自定义名称的连接
         time_end=time.time() 
         show_info_message(self,"更新模型数据库",f"处理完成: 花费时间 {((time_end-time_start)/60.0):.2f} 分钟") 
-
+        self.progress_bar.setText("")
+        
     # 用户手册
     def userManual(self):
         from DeeplearningSystem import base_dir

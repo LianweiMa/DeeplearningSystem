@@ -1,5 +1,6 @@
 from qgis.PyQt.QtCore import QThread, pyqtSignal
 from xml.dom import minidom
+from lxml import etree
 
 class QuerySampleThread(QThread):
     finished = pyqtSignal(object)  # 用于将数据从子线程发送到主线程的信号
@@ -21,22 +22,34 @@ class QuerySampleThread(QThread):
         sampleName = self.ui.comboBox_Name.currentText()
         self.sampleList = []
         from DeeplearningSystem import sample_cofing_path
-        dom = minidom.parse(sample_cofing_path)#Samples
-        root = dom.documentElement
-        for child in root.childNodes:#SampleClass
-            if child.nodeType == child.ELEMENT_NODE:
-                for __, attr_value in child.attributes.items():                       
-                    if attr_value == sampleClass:                                   
-                        for child2 in child.childNodes:#SamplePath
-                            if child2.nodeType == child2.ELEMENT_NODE:                              
-                                samplePath = child2.firstChild.data.strip()
-                                data_dict = {}
-                                for key, value in child2.attributes.items():
-                                    data_dict[key] = value
-                                size = data_dict['Size']
-                                type = data_dict['Type']
-                                gsd = data_dict['GSD']
-                                name = data_dict['Name']
-                                if (sampleSize==size or sampleSize=='') and (sampleType==type or sampleType=='') and (sampleGSD==gsd or sampleGSD=='') and (sampleName==name or sampleName==''):
-                                    self.sampleList.append(samplePath)
+        # 加载现有 XML
+        tree = etree.parse(sample_cofing_path)
+        if sampleClass == '':
+            nodes = tree.xpath(f'//SamplePath')
+            for i,node in enumerate(nodes):
+                self.sampleList.append(node.text)
+            return
+        if sampleSize == '':
+            nodes = tree.xpath(f'//SampleClass[@EnglishName="{sampleClass}"]/SamplePath')
+            for i,node in enumerate(nodes):
+                self.sampleList.append(node.text)
+            return
+        if sampleType == '':
+            nodes = tree.xpath(f'//SampleClass[@EnglishName="{sampleClass}"]/SamplePath[@Size="{sampleSize}"]')
+            for i,node in enumerate(nodes):
+                self.sampleList.append(node.text)
+            return
+        if sampleGSD == '':
+            nodes = tree.xpath(f'//SampleClass[@EnglishName="{sampleClass}"]/SamplePath[@Size="{sampleSize}" and @Type="{sampleType}"]')
+            for i,node in enumerate(nodes):
+                self.sampleList.append(node.text)
+            return
+        if sampleName == '':
+            nodes = tree.xpath(f'//SampleClass[@EnglishName="{sampleClass}"]/SamplePath[@Size="{sampleSize}" and @Type="{sampleType}" and @GSD="{sampleGSD}"]')
+            for i,node in enumerate(nodes):
+                self.sampleList.append(node.text)
+            return
+        nodes = tree.xpath(f'//SampleClass[@EnglishName="{sampleClass}"]/SamplePath[@Size="{sampleSize}" and @Type="{sampleType}" and @GSD="{sampleGSD}" and @Name="{sampleName}"]')
+        for i,node in enumerate(nodes):
+            self.sampleList.append(node.text)       
         return 'query sucess'

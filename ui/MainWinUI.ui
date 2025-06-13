@@ -251,8 +251,8 @@
    <addaction name="separator"/>
    <addaction name="actionSplitDataSet"/>
    <addaction name="separator"/>
-   <addaction name="actionUpdateModelsDB"/>
    <addaction name="actionUpdateDatabase"/>
+   <addaction name="actionUpdateModelsDB"/>
   </widget>
   <widget class="QDockWidget" name="dockWidgetTOCView">
    <property name="minimumSize">
@@ -662,7 +662,7 @@
   <action name="actionUpdateDatabase">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/net_update.png</normaloff>:/icon/net_update.png</iconset>
+     <normaloff>:/icon/label_update.png</normaloff>:/icon/label_update.png</iconset>
    </property>
    <property name="text">
     <string>更新样本数据库</string>
@@ -703,7 +703,7 @@
   <action name="actionUpdateModelsDB">
    <property name="icon">
     <iconset resource="../settings/icon/DeepLearningSystem.qrc">
-     <normaloff>:/icon/label_update.png</normaloff>:/icon/label_update.png</iconset>
+     <normaloff>:/icon/net_update.png</normaloff>:/icon/net_update.png</iconset>
    </property>
    <property name="text">
     <string>更新模型数据库</string>

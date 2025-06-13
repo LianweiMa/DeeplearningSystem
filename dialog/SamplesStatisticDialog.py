@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QDialog
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QIcon, QPixmap
 from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from lxml import etree
+from PyQt5.QtSql import QSqlDatabase, QSqlQueryModel
 # XML文件的路径
 from DeeplearningSystem import sample_cofing_path
 from tools.CommonTool import show_info_message
@@ -25,9 +26,10 @@ class SamplesStatisticDialog(QDialog, Ui_Dialog):
         self.setWindowFlags(self.windowFlags() & ~(Qt.WindowContextHelpButtonHint))   
 
         # 创建数据库连接
-        from PyQt5.QtSql import QSqlDatabase, QSqlQueryModel
-        self.db = QSqlDatabase.addDatabase("QSQLITE")  # 使用SQLite，也可以是QMYSQL、QPSQL等
-        self.db.setDatabaseName("databae_samples.db")  # 数据库文件路径
+        self.connection_name = "samples_conn1"  # 使用唯一连接名
+        self.db = QSqlDatabase.addDatabase("QSQLITE", self.connection_name)
+        dbs = join(base_dir, 'settings/db', 'databae_samples.db') 
+        self.db.setDatabaseName(dbs)  # 数据库文件路径
         if not self.db.open():
             print("无法连接数据库")
             return False
@@ -43,8 +45,7 @@ class SamplesStatisticDialog(QDialog, Ui_Dialog):
         self.tableView.horizontalHeader().setSectionsClickable(True)# 设置 QTableView 的列头可排序
         self.toolButton_AttributeSelect.clicked.connect(self.AttributeSelect)
         self.toolButton_ClearSelect.clicked.connect(self.ClearSelect)
-
-        
+       
         self.label.setText(f'共计样本量：{sum_column(self.tableView,8)}个')
     def bak(self, parent=None):
         super().__init__(parent)
@@ -67,6 +68,15 @@ class SamplesStatisticDialog(QDialog, Ui_Dialog):
         self.toolButton_AttributeSelect.clicked.connect(self.AttributeSelect)
         self.toolButton_ClearSelect.clicked.connect(self.ClearSelect)
 
+    def closeEvent(self, event):    
+        if self.db and self.db.isOpen():
+                self.db.close()
+        del self.sampleModel, self.db
+        # 确保移除连接
+        if self.connection_name in QSqlDatabase.connectionNames():
+            QSqlDatabase.removeDatabase(self.connection_name)
+         # 最后调用父类关闭事件处理
+        super().closeEvent(event)
         
     def AttributeSelect(self):       
         from dialog.AttributeQueryDialog import AttributeQueryDialog

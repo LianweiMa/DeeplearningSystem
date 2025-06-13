@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ImportSamplesDialog.ui'
+# Form implementation generated from reading ui file 'ImportSamplesUI.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -65,14 +65,6 @@ class Ui_Dialog(object):
         self.label_7.setAlignment(QtCore.Qt.AlignCenter)
         self.label_7.setObjectName("label_7")
         self.gridLayout_2.addWidget(self.label_7, 1, 4, 1, 1)
-        self.lineEdit_labelType = QtWidgets.QLineEdit(self.groupBox_setParas)
-        self.lineEdit_labelType.setText("")
-        self.lineEdit_labelType.setObjectName("lineEdit_labelType")
-        self.gridLayout_2.addWidget(self.lineEdit_labelType, 0, 1, 1, 1)
-        self.lineEdit_labelSize = QtWidgets.QLineEdit(self.groupBox_setParas)
-        self.lineEdit_labelSize.setText("")
-        self.lineEdit_labelSize.setObjectName("lineEdit_labelSize")
-        self.gridLayout_2.addWidget(self.lineEdit_labelSize, 0, 3, 1, 1)
         self.label_5 = QtWidgets.QLabel(self.groupBox_setParas)
         self.label_5.setAlignment(QtCore.Qt.AlignCenter)
         self.label_5.setObjectName("label_5")
@@ -80,9 +72,6 @@ class Ui_Dialog(object):
         self.label = QtWidgets.QLabel(self.groupBox_setParas)
         self.label.setObjectName("label")
         self.gridLayout_2.addWidget(self.label, 0, 4, 1, 1)
-        self.lineEdit_labelGSD = QtWidgets.QLineEdit(self.groupBox_setParas)
-        self.lineEdit_labelGSD.setObjectName("lineEdit_labelGSD")
-        self.gridLayout_2.addWidget(self.lineEdit_labelGSD, 0, 5, 1, 1)
         self.label_6 = QtWidgets.QLabel(self.groupBox_setParas)
         self.label_6.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.label_6.setAlignment(QtCore.Qt.AlignCenter)
@@ -104,9 +93,18 @@ class Ui_Dialog(object):
         self.label_10 = QtWidgets.QLabel(self.groupBox_setParas)
         self.label_10.setObjectName("label_10")
         self.gridLayout_2.addWidget(self.label_10, 2, 0, 1, 1)
-        self.lineEdit_Class = QtWidgets.QLineEdit(self.groupBox_setParas)
-        self.lineEdit_Class.setObjectName("lineEdit_Class")
-        self.gridLayout_2.addWidget(self.lineEdit_Class, 2, 1, 1, 1)
+        self.comboBox_labelType = QtWidgets.QComboBox(self.groupBox_setParas)
+        self.comboBox_labelType.setObjectName("comboBox_labelType")
+        self.gridLayout_2.addWidget(self.comboBox_labelType, 0, 1, 1, 1)
+        self.comboBox_labelSize = QtWidgets.QComboBox(self.groupBox_setParas)
+        self.comboBox_labelSize.setObjectName("comboBox_labelSize")
+        self.gridLayout_2.addWidget(self.comboBox_labelSize, 0, 3, 1, 1)
+        self.comboBox_labelGSD = QtWidgets.QComboBox(self.groupBox_setParas)
+        self.comboBox_labelGSD.setObjectName("comboBox_labelGSD")
+        self.gridLayout_2.addWidget(self.comboBox_labelGSD, 0, 5, 1, 1)
+        self.comboBox_class = QtWidgets.QComboBox(self.groupBox_setParas)
+        self.comboBox_class.setObjectName("comboBox_class")
+        self.gridLayout_2.addWidget(self.comboBox_class, 2, 1, 1, 1)
         self.verticalLayout_2.addLayout(self.gridLayout_2)
         self.verticalLayoutMain.addWidget(self.groupBox_setParas)
         self.verticalLayout = QtWidgets.QVBoxLayout()

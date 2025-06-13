@@ -32,7 +32,7 @@ class MakeSampleThread(QThread):
 
         dataset = gdal.Open(image_file)
         if dataset is None:
-            raise Exception("无法打开栅格文件")
+            raise Exception(f"无法打开栅格文件:{image_file}")
 
         # 获取地理变换参数
         geotransform = dataset.GetGeoTransform()

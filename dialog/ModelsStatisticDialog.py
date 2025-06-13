@@ -30,7 +30,8 @@ class ModelsStatisticDialog(QDialog, Ui_Dialog):
         # 创建数据库连接
         self.connection_name = "connection_ModelsStatistic"  # 自定义连接名称
         self.db = QSqlDatabase.addDatabase("QSQLITE",self.connection_name)  # 使用SQLite，也可以是QMYSQL、QPSQL等
-        self.db.setDatabaseName("databae_models.db")  # 数据库文件路径
+        dbs = join(base_dir, 'settings/db', 'databae_models.db') 
+        self.db.setDatabaseName(dbs)  # 数据库文件路径
         if not self.db.open():
             print("无法连接数据库")
             return False
@@ -54,9 +55,12 @@ class ModelsStatisticDialog(QDialog, Ui_Dialog):
         else:
             print("用户取消或直接关闭")
         """
-        
-        self.db.close()
-        QSqlDatabase.removeDatabase(self.connection_name)  # 移除自定义名称的连接
+        if self.db and self.db.isOpen():
+                self.db.close()
+        del self.netModel, self.db
+        # 确保移除连接
+        if self.connection_name in QSqlDatabase.connectionNames():
+            QSqlDatabase.removeDatabase(self.connection_name)
 
     def AttributeSelect(self):       
         from dialog.ModelQueryDialog import ModelQueryDialog

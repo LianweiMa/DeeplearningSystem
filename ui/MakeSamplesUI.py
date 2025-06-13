@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'MakeSampleDiaolog.ui'
+# Form implementation generated from reading ui file 'MakeSamplesUI.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -14,16 +14,11 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(514, 257)
-        Dialog.setMinimumSize(QtCore.QSize(514, 257))
-        Dialog.setMaximumSize(QtCore.QSize(514, 257))
-        self.gridLayout_3 = QtWidgets.QGridLayout(Dialog)
-        self.gridLayout_3.setObjectName("gridLayout_3")
-        self.horizontalLayout_1 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_1.setObjectName("horizontalLayout_1")
-        self.verticalLayoutMain = QtWidgets.QVBoxLayout()
-        self.verticalLayoutMain.setSizeConstraint(QtWidgets.QLayout.SetDefaultConstraint)
-        self.verticalLayoutMain.setObjectName("verticalLayoutMain")
+        Dialog.resize(514, 260)
+        Dialog.setMinimumSize(QtCore.QSize(0, 0))
+        Dialog.setMaximumSize(QtCore.QSize(514, 280))
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(Dialog)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.groupBox_SelectSample = QtWidgets.QGroupBox(Dialog)
         self.groupBox_SelectSample.setObjectName("groupBox_SelectSample")
         self.horizontalLayout_openImage = QtWidgets.QHBoxLayout(self.groupBox_SelectSample)
@@ -75,7 +70,7 @@ class Ui_Dialog(object):
         self.horizontalLayout_6.addWidget(self.pushButton_OpenBoundaryFile)
         self.verticalLayout_4.addLayout(self.horizontalLayout_6)
         self.horizontalLayout_openImage.addLayout(self.verticalLayout_4)
-        self.verticalLayoutMain.addWidget(self.groupBox_SelectSample)
+        self.verticalLayout_2.addWidget(self.groupBox_SelectSample)
         self.groupBox_paras = QtWidgets.QGroupBox(Dialog)
         self.groupBox_paras.setObjectName("groupBox_paras")
         self.gridLayoutWidget = QtWidgets.QWidget(self.groupBox_paras)
@@ -91,17 +86,29 @@ class Ui_Dialog(object):
         self.label_6.setObjectName("label_6")
         self.gridLayout.addWidget(self.label_6, 0, 2, 1, 1)
         self.lineEdit_sampleGSD = QtWidgets.QLineEdit(self.gridLayoutWidget)
-        self.lineEdit_sampleGSD.setMaximumSize(QtCore.QSize(60, 16777215))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEdit_sampleGSD.sizePolicy().hasHeightForWidth())
+        self.lineEdit_sampleGSD.setSizePolicy(sizePolicy)
+        self.lineEdit_sampleGSD.setMinimumSize(QtCore.QSize(100, 0))
+        self.lineEdit_sampleGSD.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.lineEdit_sampleGSD.setObjectName("lineEdit_sampleGSD")
         self.gridLayout.addWidget(self.lineEdit_sampleGSD, 0, 3, 1, 1)
         self.comboBox_sampleClass = QtWidgets.QComboBox(self.gridLayoutWidget)
-        self.comboBox_sampleClass.setMaximumSize(QtCore.QSize(60, 16777215))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.comboBox_sampleClass.sizePolicy().hasHeightForWidth())
+        self.comboBox_sampleClass.setSizePolicy(sizePolicy)
+        self.comboBox_sampleClass.setMinimumSize(QtCore.QSize(100, 0))
+        self.comboBox_sampleClass.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.comboBox_sampleClass.setEditable(True)
         self.comboBox_sampleClass.setObjectName("comboBox_sampleClass")
         self.gridLayout.addWidget(self.comboBox_sampleClass, 0, 1, 1, 1)
-        spacerItem = QtWidgets.QSpacerItem(100, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem = QtWidgets.QSpacerItem(200, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout.addItem(spacerItem, 0, 4, 1, 1)
-        self.verticalLayoutMain.addWidget(self.groupBox_paras)
+        self.verticalLayout_2.addWidget(self.groupBox_paras)
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
         self.horizontalLayout_saveImage = QtWidgets.QHBoxLayout()
@@ -123,9 +130,7 @@ class Ui_Dialog(object):
         self.pushButton_MakeSample = QtWidgets.QPushButton(Dialog)
         self.pushButton_MakeSample.setObjectName("pushButton_MakeSample")
         self.verticalLayout.addWidget(self.pushButton_MakeSample, 0, QtCore.Qt.AlignHCenter)
-        self.verticalLayoutMain.addLayout(self.verticalLayout)
-        self.horizontalLayout_1.addLayout(self.verticalLayoutMain)
-        self.gridLayout_3.addLayout(self.horizontalLayout_1, 0, 0, 1, 1)
+        self.verticalLayout_2.addLayout(self.verticalLayout)
 
         self.retranslateUi(Dialog)
         self.pushButton_MakeSample.clicked.connect(Dialog.accept) # type: ignore

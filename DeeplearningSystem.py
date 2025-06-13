@@ -22,8 +22,8 @@ lic_path = join(base_dir, 'license', 'license.lic')
 zh_Hans = join(base_dir, 'settings', 'zh-Hans.qm')
 model_cofing_path = join(base_dir, 'settings', 'ModelsConfig.xml')
 sample_cofing_path = join(base_dir, 'settings', 'SamplesConfig.xml')
-train_set = join(base_dir, 'temp/sample', 'train_set.txt')
-val_set = join(base_dir, 'temp/sample', 'val_set.txt')
+train_set = join(base_dir, 'settings/samples', 'train_set.txt')
+val_set = join(base_dir, 'settings/samples', 'val_set.txt')
 
 
 if __name__ == "__main__":

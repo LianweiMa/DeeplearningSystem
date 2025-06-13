@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QFileDialog
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt
+import geopandas as gpd
+from tools.CommonTool import show_info_message
 from ui.MakeSamplesUI import Ui_Dialog
 
 
@@ -28,7 +30,6 @@ class MakeSamplesDialog(QDialog, Ui_Dialog):
         self.comboBox_sampleClass.setCurrentIndex(-1)
 
     def openImageFile_clicked(self,Dialog):
-        from qgis.PyQt.QtWidgets import QFileDialog
         path_to_tif,_ = QFileDialog.getOpenFileName(None, '打开', '', 'Raster Files (*.tif;*.tiff;*.img;*.dat);;All Files (*.*)')
         if  path_to_tif=="":
             return
@@ -49,21 +50,32 @@ class MakeSamplesDialog(QDialog, Ui_Dialog):
         dataset = None
 
     def openLabelFile_clicked(self,Dialog):
-        from qgis.PyQt.QtWidgets import QFileDialog
-        path_to_vec,_ = QFileDialog.getOpenFileName(None, '打开', '', 'Shape Files (*.shp);;All Files (*.*)')
-        if  path_to_vec=="":
+        path,_ = QFileDialog.getOpenFileName(None, '打开', '', 'Shape Files (*.shp);;All Files (*.*)')
+        if  path=="":
             return
-        self.lineEdit_label.setText(path_to_vec)
+        
+        # 读取矢量文件
+        gdf = gpd.read_file(path)
+        # 检查 'NewField' 是否已经存在
+        if 'ClassID' not in gdf.columns:
+            show_info_message(self,"样本制作","标签矢量文件需要ClassID字段，但该矢量不存在该字段！")
+            return
+        self.lineEdit_label.setText(path)
 
     def openBoundaryFile_clicked(self,Dialog):
-        from qgis.PyQt.QtWidgets import QFileDialog
-        path_to_vec,_ = QFileDialog.getOpenFileName(None, '打开', '', 'Shape Files (*.shp);;All Files (*.*)')
-        if  path_to_vec=="":
+        path,_ = QFileDialog.getOpenFileName(None, '打开', '', 'Shape Files (*.shp);;All Files (*.*)')
+        if  path=="":
             return
-        self.lineEdit_boundary.setText(path_to_vec)
+        
+         # 读取矢量文件
+        gdf = gpd.read_file(path)
+        # 检查 'NewField' 是否已经存在
+        if 'Name' not in gdf.columns:
+            show_info_message(self,"样本制作","标签矢量文件需要Name字段，但该矢量不存在该字段！")
+            return
+        self.lineEdit_boundary.setText(path)
 
     def saveSamplePath_clicked(self,Dialog):
-        from qgis.PyQt.QtWidgets import QFileDialog
         folder_selected = QFileDialog.getExistingDirectory(None, "Select Folder to Save")
         if  folder_selected:
             self.lineEdit_saveSamplePath.setText(folder_selected)

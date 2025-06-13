@@ -104,6 +104,6 @@ class TrainDialog(QDialog, Ui_Dialog):
 
     def saveModel_clicked(self,Dialog):
         from qgis.PyQt.QtWidgets import QFileDialog
-        folder_selected = QFileDialog.getExistingDirectory(None, "Select Folder to Save")
+        folder_selected = QFileDialog.getExistingDirectory(self, "Select Folder to Save")
         if  folder_selected:
             self.lineEdit_saveModelPath.setText(folder_selected)
